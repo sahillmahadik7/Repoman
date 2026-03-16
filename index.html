@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VulnReport — AI Cybersecurity Assessment Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0c0f;
+            --surface: #111418;
+            --surface2: #181c22;
+            --surface3: #1e2329;
+            --border: rgba(255, 255, 255, 0.07);
+            --border-bright: rgba(255, 255, 255, 0.14);
+            --accent: #00e5a0;
+            --accent-dim: rgba(0, 229, 160, 0.12);
+            --accent-glow: rgba(0, 229, 160, 0.25);
+            --red: #ff4d4d;
+            --red-dim: rgba(255, 77, 77, 0.12);
+            --orange: #ff8c42;
+            --orange-dim: rgba(255, 140, 66, 0.12);
+            --yellow: #ffd166;
+            --yellow-dim: rgba(255, 209, 102, 0.12);
+            --blue: #4da6ff;
+            --blue-dim: rgba(77, 166, 255, 0.12);
+            --text: #e8eaed;
+            --text-muted: #8b949e;
+            --text-dim: #4a5568;
+            --radius: 8px;
+            --radius-lg: 14px;
+            --font-mono: 'Space Mono', monospace;
+            --font-sans: 'DM Sans', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 229, 160, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 160, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Top scan line effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            animation: scanline 4s ease-in-out infinite;
+            z-index: 100;
+            opacity: 0.6;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100vw);
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* NAV */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            background: rgba(10, 12, 15, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .nav-logo .shield {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(0, 229, 160, 0.3);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-logo .shield svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--accent);
+        }
+
+        .nav-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 3px 8px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 160, 0.2);
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+        }
+
+        /* MAIN LAYOUT */
+        main {
+            flex: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 2rem 4rem;
+            width: 100%;
+        }
+
+        /* HERO */
+        .hero {
+            text-align: center;
+            margin-bottom: 3.5rem;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 160, 0.25);
+            background: var(--accent-dim);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 1.25rem;
+            letter-spacing: 0.08em;
+        }
+
+        .hero-tag::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 600;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+
+        h1 span {
+            color: var(--accent);
+        }
+
+        .hero-sub {
+            font-size: 16px;
+            color: var(--text-muted);
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* MAIN GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.5rem;
+            animation: fadeUp 0.6s 0.1s ease both;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .card-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        /* DROPZONE */
+        .dropzone {
+            border: 1.5px dashed var(--border-bright);
+            border-radius: var(--radius);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            background: var(--surface2);
+        }
+
+        .dropzone:hover,
+        .dropzone.drag-over {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .dropzone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .dz-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            background: var(--surface3);
+            border: 1px solid var(--border-bright);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dz-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--text-muted);
+        }
+
+        .dz-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .dz-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .dz-hint code {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            background: var(--surface3);
+            padding: 1px 5px;
+            border-radius: 3px;
+            color: var(--accent);
+        }
+
+        /* FILE LOADED STATE */
+        .file-loaded {
+            display: none;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+        }
+
+        .file-loaded.show {
+            display: block;
+        }
+
+        .file-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: .75rem;
+        }
+
+        .file-ext-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid rgba(0, 229, 160, 0.25);
+            border-radius: 4px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .file-meta {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .file-size {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 18px;
+            line-height: 1;
+            padding: 2px;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+
+        .remove-btn:hover {
+            color: var(--red);
+        }
+
+        .file-preview {
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            line-height: 1.8;
+            color: var(--text-muted);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: .75rem 1rem;
+            max-height: 140px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .file-preview::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .file-preview::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .file-preview::-webkit-scrollbar-thumb {
+            background: var(--border-bright);
+            border-radius: 2px;
+        }
+
+        /* FORM ELEMENTS */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: .4rem;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: .6rem .85rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: var(--font-sans);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: rgba(0, 229, 160, 0.4);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%238b949e'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 2rem;
+            cursor: pointer;
+        }
+
+        select option {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 70px;
+            line-height: 1.6;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .75rem;
+        }
+
+        /* SECTION TOGGLES */
+        .section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .toggle-chip {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: .5rem .75rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 12px;
+            color: var(--text-muted);
+            user-select: none;
+        }
+
+        .toggle-chip:hover {
+            border-color: var(--border-bright);
+            color: var(--text);
+        }
+
+        .toggle-chip.on {
+            background: var(--accent-dim);
+            border-color: rgba(0, 229, 160, 0.25);
+            color: var(--accent);
+        }
+
+        .toggle-chip input {
+            display: none;
+        }
+
+        .chip-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--border-bright);
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+
+        .toggle-chip.on .chip-dot {
+            background: var(--accent);
+        }
+
+        /* GENERATE BUTTON */
+        .gen-btn {
+            width: 100%;
+            padding: .85rem 1.5rem;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .gen-btn:hover:not(:disabled) {
+            background: #00ffb3;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px var(--accent-glow);
+        }
+
+        .gen-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .gen-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* PROGRESS */
+        .progress-wrap {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .progress-wrap.show {
+            display: block;
+        }
+
+        .progress-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: .75rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-dim);
+            transition: color 0.3s;
+        }
+
+        .step.active {
+            color: var(--text);
+        }
+
+        .step.done {
+            color: var(--accent);
+        }
+
+        .step-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+
+        .step.active .step-dot {
+            background: var(--text);
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+        }
+
+        .step.done .step-dot {
+            background: var(--accent);
+        }
+
+        .progress-track {
+            height: 2px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #00b3ff);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 2px;
+        }
+
+        /* ERROR */
+        .error-msg {
+            display: none;
+            padding: .75rem 1rem;
+            background: var(--red-dim);
+            border: 1px solid rgba(255, 77, 77, 0.2);
+            border-radius: var(--radius);
+            color: var(--red);
+            font-size: 12px;
+            margin-top: .75rem;
+            line-height: 1.6;
+        }
+
+        .error-msg.show {
+            display: block;
+        }
+
+        /* OUTPUT PANEL */
+        .output-panel {
+            display: none;
+            margin-top: 1.5rem;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .output-panel.show {
+            display: block;
+        }
+
+        /* SEVERITY STATS */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .stat-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: .75rem;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-family: var(--font-mono);
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-lbl {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .stat-num.critical {
+            color: var(--red);
+        }
+
+        .stat-num.high {
+            color: var(--orange);
+        }
+
+        .stat-num.medium {
+            color: var(--yellow);
+        }
+
+        .stat-num.low {
+            color: var(--blue);
+        }
+
+        /* REPORT CARD */
+        .report-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .report-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .85rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+
+        .report-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .report-title {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .class-badge {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 3px;
+            background: var(--red-dim);
+            color: var(--red);
+            border: 1px solid rgba(255, 77, 77, 0.2);
+            letter-spacing: 0.05em;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .act-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: .4rem .85rem;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .act-btn:hover {
+            border-color: var(--border-bright);
+            color: var(--text);
+        }
+
+        .act-btn.primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .act-btn.primary:hover {
+            background: #00ffb3;
+        }
+
+        .report-body {
+            padding: 1.5rem;
+            max-height: 520px;
+            overflow-y: auto;
+            font-size: 13.5px;
+            line-height: 1.85;
+            color: var(--text);
+        }
+
+        .report-body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .report-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .report-body::-webkit-scrollbar-thumb {
+            background: var(--border-bright);
+            border-radius: 2px;
+        }
+
+        .report-body h2 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent);
+            margin: 1.5rem 0 .6rem;
+            padding-bottom: .4rem;
+            border-bottom: 1px solid rgba(0, 229, 160, 0.15);
+            font-family: var(--font-mono);
+            letter-spacing: 0.03em;
+        }
+
+        .report-body h2:first-child {
+            margin-top: 0;
+        }
+
+        .report-body h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 1rem 0 .35rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .report-body p {
+            margin-bottom: .6rem;
+        }
+
+        .report-body ul {
+            margin: .3rem 0 .6rem 1.2rem;
+        }
+
+        .report-body li {
+            margin-bottom: .25rem;
+        }
+
+        .sev-tag {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 3px;
+            letter-spacing: 0.06em;
+        }
+
+        .sev-tag.critical {
+            background: var(--red-dim);
+            color: var(--red);
+            border: 1px solid rgba(255, 77, 77, 0.25);
+        }
+
+        .sev-tag.high {
+            background: var(--orange-dim);
+            color: var(--orange);
+            border: 1px solid rgba(255, 140, 66, 0.25);
+        }
+
+        .sev-tag.medium {
+            background: var(--yellow-dim);
+            color: var(--yellow);
+            border: 1px solid rgba(255, 209, 102, 0.25);
+        }
+
+        .sev-tag.low {
+            background: var(--blue-dim);
+            color: var(--blue);
+            border: 1px solid rgba(77, 166, 255, 0.25);
+        }
+
+        /* SPINNER */
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-top-color: #000;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* API KEY SETUP */
+        .api-setup {
+            background: var(--surface);
+            border: 1px solid rgba(0, 229, 160, 0.2);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .api-setup.show {
+            display: block;
+        }
+
+        .api-setup-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: .5rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .api-setup p {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: .75rem;
+        }
+
+        .api-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .api-row input {
+            flex: 1;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .api-save-btn {
+            padding: .5rem 1rem;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: var(--font-sans);
+        }
+
+        .api-save-btn:hover {
+            background: #00ffb3;
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.inactive {
+            background: var(--text-dim);
+            animation: none;
+        }
+
+        /* FOOTER */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-dim);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--accent);
+        }
+
+        /* TOOLTIP */
+        .tooltip-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface3);
+            border: 1px solid var(--border-bright);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 11px;
+            color: var(--text);
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 99;
+        }
+
+        .tooltip-wrap:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            main {
+                padding: 1.5rem 1rem 3rem;
+            }
+
+            nav {
+                padding: .85rem 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .report-topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+
+        <!-- NAV -->
+        <nav>
+            <a class="nav-logo" href="#">
+                <div class="shield">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                    </svg>
+                </div>
+                VulnReport
+            </a>
+            <div class="nav-right">
+                <div class="status-bar">
+                    <div class="status-dot inactive" id="statusDot"></div>
+                    <span id="statusText">Not connected</span>
+                </div>
+                <span class="nav-badge">v1.0</span>
+            </div>
+        </nav>
+
+        <!-- MAIN -->
+        <main>
+
+            <!-- HERO -->
+            <div class="hero">
+                <div class="hero-tag">AI-Powered Security Assessment</div>
+                <h1>From raw proof to<br><span>professional report</span></h1>
+                <p class="hero-sub">Upload your vulnerability data — scan outputs, CVEs, pentest notes — and get a
+                    structured security assessment PDF in seconds.</p>
+            </div>
+
+            <!-- API KEY SETUP -->
+            <div class="api-setup show" id="apiSetup">
+                <div class="api-setup-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
+                    </svg>
+                    Connect your Anthropic API key
+                </div>
+                <p>Your key is stored only in your browser's localStorage and never sent anywhere except directly to
+                    Anthropic's API. <a href="https://console.anthropic.com/keys" target="_blank"
+                        style="color:var(--accent)">Get a key →</a></p>
+                <div class="api-row">
+                    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+                    <button class="api-save-btn" id="apiSaveBtn">Save Key</button>
+                </div>
+            </div>
+
+            <!-- MAIN GRID -->
+            <div class="grid">
+
+                <!-- LEFT: INPUT -->
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+
+                    <!-- Upload -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:var(--accent-dim)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)">
+                                    <path
+                                        d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="card-title">Proof File</div>
+                                <div class="card-sub">Upload your evidence / scan output</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="dropzone" id="dropzone">
+                                <input type="file" id="fileInput" accept=".txt,.log,.csv,.md,.nmap,.xml,.json,.out">
+                                <div class="dz-icon">
+                                    <svg viewBox="0 0 24 24">
+                                        <path
+                                            d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+                                    </svg>
+                                </div>
+                                <div class="dz-title">Drop your proof file here</div>
+                                <div class="dz-hint">
+                                    Supports <code>.txt</code> <code>.log</code> <code>.nmap</code> <code>.xml</code>
+                                    <code>.csv</code> <code>.json</code><br>
+                                    Nmap / Nessus scans, CVE lists, pentest notes, recon data
+                                </div>
+                            </div>
+
+                            <div class="file-loaded" id="fileLoaded">
+                                <div class="file-header">
+                                    <div class="file-ext-badge" id="fileExt">TXT</div>
+                                    <div class="file-meta">
+                                        <div class="file-name" id="fileName">—</div>
+                                        <div class="file-size" id="fileSize">—</div>
+                                    </div>
+                                    <button class="remove-btn" id="removeFileBtn" title="Remove file">×</button>
+                                </div>
+                                <div class="file-preview" id="filePreview"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sections -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(77,166,255,0.1)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--blue)">
+                                    <path
+                                        d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="card-title">Report Sections</div>
+                                <div class="card-sub">Choose what to include</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="section-grid" id="sectionGrid">
+                                <label class="toggle-chip on" data-key="executive">
+                                    <input type="checkbox" checked>
+                                    <div class="chip-dot"></div> Executive Summary
+                                </label>
+                                <label class="toggle-chip on" data-key="scope">
+                                    <input type="checkbox" checked>
+                                    <div class="chip-dot"></div> Scope & Methodology
+                                </label>
+                                <label class="toggle-chip on" data-key="findings">
+                                    <input type="checkbox" checked>
+                                    <div class="chip-dot"></div> Vulnerability Findings
+                                </label>
+                                <label class="toggle-chip on" data-key="cve">
+                                    <input type="checkbox" checked>
+                                    <div class="chip-dot"></div> CVE References
+                                </label>
+                                <label class="toggle-chip on" data-key="risk">
+                                    <input type="checkbox" checked>
+                                    <div class="chip-dot"></div> Risk Matrix
+                                </label>
+                                <label class="toggle-chip on" data-key="remediation">
+                                    <input type="checkbox" checked>
+                                    <div class="chip-dot"></div> Remediation Plan
+                                </label>
+                                <label class="toggle-chip on" data-key="conclusion">
+                                    <input type="checkbox" checked>
+                                    <div class="chip-dot"></div> Conclusion
+                                </label>
+                                <label class="toggle-chip" data-key="appendix">
+                                    <input type="checkbox">
+                                    <div class="chip-dot"></div> Raw Evidence Appendix
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generate -->
+                    <div>
+                        <button class="gen-btn" id="generateBtn" disabled>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                            </svg>
+                            Upload a file to generate
+                        </button>
+
+                        <div class="progress-wrap" id="progressWrap">
+                            <div class="progress-steps" id="progressSteps">
+                                <div class="step" data-step="0">
+                                    <div class="step-dot"></div> Reading proof file
+                                </div>
+                                <div class="step" data-step="1">
+                                    <div class="step-dot"></div> Analyzing vulnerabilities with Claude AI
+                                </div>
+                                <div class="step" data-step="2">
+                                    <div class="step-dot"></div> Structuring report sections
+                                </div>
+                                <div class="step" data-step="3">
+                                    <div class="step-dot"></div> Generating remediation plan
+                                </div>
+                                <div class="step" data-step="4">
+                                    <div class="step-dot"></div> Finalizing report
+                                </div>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                        </div>
+
+                        <div class="error-msg" id="errorMsg"></div>
+                    </div>
+
+                </div><!-- end left col -->
+
+                <!-- RIGHT: SETTINGS -->
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+
+                    <!-- Report Settings -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(255,140,66,0.1)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--orange)">
+                                    <path
+                                        d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="card-title">Report Settings</div>
+                                <div class="card-sub">Metadata & classification</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Organization / Target</label>
+                                <input type="text" id="orgName" placeholder="e.g. Acme Corporation">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Assessment Date</label>
+                                    <input type="date" id="assessDate">
+                                </div>
+                                <div class="form-group">
+                                    <label>Assessment Type</label>
+                                    <select id="assessType">
+                                        <option>Internal Pentest</option>
+                                        <option>External Pentest</option>
+                                        <option>Vulnerability Scan</option>
+                                        <option>Red Team</option>
+                                        <option>Web App Assessment</option>
+                                        <option>Network Assessment</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Lead Assessor</label>
+                                <input type="text" id="assessorName" placeholder="e.g. Jane Smith, OSCP">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Classification</label>
+                                    <select id="classification">
+                                        <option>CONFIDENTIAL</option>
+                                        <option>RESTRICTED</option>
+                                        <option>INTERNAL USE ONLY</option>
+                                        <option>PUBLIC</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Report Version</label>
+                                    <input type="text" id="reportVersion" value="1.0" placeholder="1.0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Scope / Notes (optional)</label>
+                                <textarea id="scopeNotes"
+                                    placeholder="e.g. 192.168.1.0/24, web apps at target.com, excludes prod DB..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(0,229,160,0.1)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)">
+                                    <path
+                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="card-title">What to put in your file</div>
+                            </div>
+                        </div>
+                        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+                            <div style="font-size:12px;color:var(--text-muted);line-height:1.7">
+                                <strong style="color:var(--text);display:block;margin-bottom:4px">Accepted
+                                    inputs:</strong>
+                                • Nmap / Nessus / OpenVAS scan output<br>
+                                • CVE IDs with descriptions<br>
+                                • Manual pentest notes<br>
+                                • Screenshot descriptions / proof text<br>
+                                • Open ports, banners, service versions<br>
+                                • Exploit results / PoC notes
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- end right col -->
+            </div><!-- end grid -->
+
+            <!-- OUTPUT -->
+            <div class="output-panel" id="outputPanel">
+
+                <!-- Severity summary -->
+                <div class="stats-bar" id="statsBar" style="display:none">
+                    <div class="stat-box">
+                        <div class="stat-num critical" id="statCritical">0</div>
+                        <div class="stat-lbl">Critical</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num high" id="statHigh">0</div>
+                        <div class="stat-lbl">High</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num medium" id="statMedium">0</div>
+                        <div class="stat-lbl">Medium</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num low" id="statLow">0</div>
+                        <div class="stat-lbl">Low</div>
+                    </div>
+                </div>
+
+                <!-- Report output -->
+                <div class="report-card">
+                    <div class="report-topbar">
+                        <div class="report-title-row">
+                            <span class="report-title" id="reportTitleBar">assessment_report.pdf</span>
+                            <span class="class-badge" id="classBadge">CONFIDENTIAL</span>
+                        </div>
+                        <div class="report-actions">
+                            <button class="act-btn" id="copyMdBtn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <path
+                                        d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                                </svg>
+                                Copy
+                            </button>
+                            <button class="act-btn primary" id="downloadPdfBtn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                                </svg>
+                                Download PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="report-body" id="reportBody"></div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer>
+            <span>VulnReport — AI Cybersecurity Assessment Generator</span>
+            <span>Powered by <a href="https://anthropic.com" target="_blank">Claude AI</a></span>
+        </footer>
+
+    </div>
+
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        // ──────────────────────────────────────────────
+        // STATE
+        // ──────────────────────────────────────────────
+        let fileContent = '';
+        let reportMarkdown = '';
+        let apiKey = localStorage.getItem('vulnreport_apikey') || '';
+
+        // ──────────────────────────────────────────────
+        // INIT
+        // ──────────────────────────────────────────────
+        document.getElementById('assessDate').value = new Date().toISOString().split('T')[0];
+
+        if (apiKey) {
+            document.getElementById('apiSetup').classList.remove('show');
+            document.getElementById('apiKeyInput').value = apiKey;
+            setStatus(true);
+        }
+
+        // ──────────────────────────────────────────────
+        // API KEY
+        // ──────────────────────────────────────────────
+        document.getElementById('apiSaveBtn').addEventListener('click', () => {
+            const val = document.getElementById('apiKeyInput').value.trim();
+            if (!val.startsWith('sk-ant')) {
+                alert('Please enter a valid Anthropic API key (starts with sk-ant...)');
+                return;
+            }
+            apiKey = val;
+            localStorage.setItem('vulnreport_apikey', apiKey);
+            document.getElementById('apiSetup').classList.remove('show');
+            setStatus(true);
+        });
+
+        function setStatus(on) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            if (on) {
+                dot.classList.remove('inactive');
+                txt.textContent = 'API connected';
+            } else {
+                dot.classList.add('inactive');
+                txt.textContent = 'Not connected';
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // FILE HANDLING
+        // ──────────────────────────────────────────────
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            const f = e.dataTransfer.files[0];
+            if (f) handleFile(f);
+        });
+        fileInput.addEventListener('change', e => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+
+        document.getElementById('removeFileBtn').addEventListener('click', clearFile);
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                fileContent = e.target.result;
+                const ext = file.name.split('.').pop().toUpperCase().slice(0, 4);
+                document.getElementById('fileExt').textContent = ext;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent =
+                    (file.size / 1024).toFixed(1) + ' KB · ' + file.type || 'text/plain';
+                document.getElementById('filePreview').textContent =
+                    fileContent.slice(0, 1000) + (fileContent.length > 1000 ? '\n... [truncated]' : '');
+                document.getElementById('fileLoaded').classList.add('show');
+                dropzone.style.display = 'none';
+
+                updateGenBtn();
+                document.getElementById('errorMsg').classList.remove('show');
+                document.getElementById('outputPanel').classList.remove('show');
+            };
+            reader.readAsText(file);
+        }
+
+        function clearFile() {
+            fileContent = '';
+            fileInput.value = '';
+            document.getElementById('fileLoaded').classList.remove('show');
+            dropzone.style.display = 'block';
+            updateGenBtn();
+        }
+
+        function updateGenBtn() {
+            const btn = document.getElementById('generateBtn');
+            if (fileContent) {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg> Generate Security Report`;
+            } else {
+                btn.disabled = true;
+                btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg> Upload a file to generate`;
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // SECTION TOGGLES
+        // ──────────────────────────────────────────────
+        document.querySelectorAll('#sectionGrid .toggle-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('on');
+                chip.querySelector('input').checked = chip.classList.contains('on');
+            });
+        });
+
+        function getSelectedSections() {
+            return Array.from(document.querySelectorAll('#sectionGrid .toggle-chip.on'))
+                .map(c => c.dataset.key);
+        }
+
+        // ──────────────────────────────────────────────
+        // PROGRESS
+        // ──────────────────────────────────────────────
+        function setStep(active) {
+            document.querySelectorAll('.step').forEach((el, i) => {
+                el.classList.remove('active', 'done');
+                if (i < active) el.classList.add('done');
+                else if (i === active) el.classList.add('active');
+            });
+            const pct = Math.round((active / 4) * 100);
+            document.getElementById('progressFill').style.width = pct + '%';
+        }
+
+        // ──────────────────────────────────────────────
+        // GENERATE
+        // ──────────────────────────────────────────────
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            if (!fileContent) return;
+            if (!apiKey) {
+                document.getElementById('apiSetup').classList.add('show');
+                document.getElementById('apiSetup').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            const org = document.getElementById('orgName').value.trim() || 'Target Organization';
+            const date = document.getElementById('assessDate').value || new Date().toISOString().split('T')[0];
+            const assessor = document.getElementById('assessorName').value.trim() || 'Security Assessor';
+            const classification = document.getElementById('classification').value;
+            const assessType = document.getElementById('assessType').value;
+            const version = document.getElementById('reportVersion').value.trim() || '1.0';
+            const scopeNotes = document.getElementById('scopeNotes').value.trim();
+            const sections = getSelectedSections();
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Generating...';
+
+            document.getElementById('progressWrap').classList.add('show');
+            document.getElementById('errorMsg').classList.remove('show');
+            document.getElementById('outputPanel').classList.remove('show');
+            setStep(0);
+
+            const sectionMap = {
+                executive: '1. Executive Summary – high-level overview of risk posture and key findings',
+                scope: '2. Scope & Methodology – what was assessed, tools used, approach',
+                findings: '3. Vulnerability Findings – each vuln with: Name, Severity (CRITICAL/HIGH/MEDIUM/LOW), CVE ID if applicable, CVSS score, affected host/service, description, proof/evidence from the file, business impact',
+                cve: '4. CVE References – table of all CVEs found: CVE ID | CVSS | Description | Affected Component',
+                risk: '5. Risk Matrix – categorized risk summary by severity with counts',
+                remediation: '6. Remediation Plan – prioritized action items by severity, with suggested timeline',
+                conclusion: '7. Conclusion & Next Steps',
+                appendix: '8. Appendix – raw evidence excerpts'
+            };
+
+            const selectedText = sections.map(s => sectionMap[s]).filter(Boolean).join('\n');
+
+            const prompt = `You are a senior cybersecurity assessor writing a professional penetration testing report.
+
+ASSESSMENT DETAILS:
+- Organization: ${org}
+- Assessment Type: ${assessType}
+- Date: ${date}
+- Lead Assessor: ${assessor}
+- Classification: ${classification}
+- Report Version: ${version}
+${scopeNotes ? `- Scope Notes: ${scopeNotes}` : ''}
+
+PROOF DATA / EVIDENCE FILE CONTENTS:
+---
+${fileContent.slice(0, 14000)}
+---
+
+Generate a comprehensive, professional cybersecurity assessment report. Include ONLY these sections:
+${selectedText}
+
+STRICT FORMAT RULES:
+- Use ## for main section headers
+- For each vulnerability use: ### [Vulnerability Name] [SEVERITY]
+  where SEVERITY is exactly one of: CRITICAL | HIGH | MEDIUM | LOW
+- Reference specific evidence from the proof data
+- CVE IDs must follow format CVE-YYYY-NNNNN
+- CVSS scores must be numeric (e.g. 9.8, 7.5)
+- Remediation steps must be specific and actionable
+- Use bullet points for lists
+- Keep language formal and professional
+- Begin the report directly — no preamble
+
+Write the complete report now:`;
+
+            try {
+                setTimeout(() => setStep(1), 600);
+
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 4096,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
+
+                setTimeout(() => setStep(2), 1200);
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                if (!data.content?.[0]?.text) throw new Error('Empty response from Claude');
+
+                reportMarkdown = data.content[0].text;
+                setTimeout(() => setStep(3), 400);
+
+                renderReport(reportMarkdown, org, date, assessor, classification, version);
+                setTimeout(() => setStep(4), 400);
+
+                setTimeout(() => {
+                    document.getElementById('progressWrap').classList.remove('show');
+                    document.getElementById('outputPanel').classList.add('show');
+                    document.getElementById('outputPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 600);
+
+            } catch (err) {
+                document.getElementById('progressWrap').classList.remove('show');
+                const errBox = document.getElementById('errorMsg');
+                errBox.classList.add('show');
+                errBox.textContent = '⚠ ' + (err.message.includes('401') ? 'Invalid API key. Please check your Anthropic API key.' : err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg> Regenerate Report';
+            }
+        });
+
+        // ──────────────────────────────────────────────
+        // RENDER REPORT
+        // ──────────────────────────────────────────────
+        function renderReport(md, org, date, assessor, classification, version) {
+            // Count severities
+            let c = 0, h = 0, m = 0, l = 0;
+            md.split('\n').forEach(line => {
+                if (line.startsWith('###')) {
+                    if (/CRITICAL/i.test(line)) c++;
+                    else if (/HIGH/i.test(line)) h++;
+                    else if (/MEDIUM/i.test(line)) m++;
+                    else if (/LOW/i.test(line)) l++;
+                }
+            });
+
+            if (c + h + m + l > 0) {
+                document.getElementById('statsBar').style.display = 'grid';
+                document.getElementById('statCritical').textContent = c;
+                document.getElementById('statHigh').textContent = h;
+                document.getElementById('statMedium').textContent = m;
+                document.getElementById('statLow').textContent = l;
+            } else {
+                document.getElementById('statsBar').style.display = 'none';
+            }
+
+            const slug = org.toLowerCase().replace(/\s+/g, '_').slice(0, 20);
+            document.getElementById('reportTitleBar').textContent = `${slug}_assessment_v${version}.pdf`;
+            document.getElementById('classBadge').textContent = classification;
+
+            // Render markdown → HTML
+            let html = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);font-family:var(--font-mono);line-height:1.8">
+    <strong style="color:var(--text)">${org}</strong> &nbsp;|&nbsp; ${date} &nbsp;|&nbsp; ${assessor} &nbsp;|&nbsp; ${document.getElementById('assessType').value}<br>
+    Report v${version} &nbsp;|&nbsp; <span style="color:var(--red)">${classification}</span>
+  </div>`;
+
+            const lines = md.split('\n');
+            let inList = false;
+
+            for (const rawLine of lines) {
+                const line = rawLine;
+
+                if (line.startsWith('## ')) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += `<h2>${escHtml(line.slice(3))}</h2>`;
+                } else if (line.startsWith('### ')) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    let title = line.slice(4);
+                    let sevClass = '';
+                    let sevLabel = '';
+                    const sevMatch = title.match(/\b(CRITICAL|HIGH|MEDIUM|LOW)\b/i);
+                    if (sevMatch) {
+                        sevLabel = sevMatch[1].toUpperCase();
+                        sevClass = sevLabel.toLowerCase();
+                        title = title.replace(sevMatch[0], '').trim().replace(/\[|\]/g, '').trim();
+                    }
+                    html += `<h3>${escHtml(title)}${sevLabel ? `<span class="sev-tag ${sevClass}">${sevLabel}</span>` : ''}</h3>`;
+                } else if (line.match(/^[-*] /)) {
+                    if (!inList) { html += '<ul>'; inList = true; }
+                    html += `<li>${inlineFormat(line.slice(2))}</li>`;
+                } else if (line.match(/^\d+\. /)) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += `<p style="margin-left:.5rem">${inlineFormat(line)}</p>`;
+                } else if (line.trim() === '') {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += '<br>';
+                } else {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += `<p>${inlineFormat(line)}</p>`;
+                }
+            }
+            if (inList) html += '</ul>';
+
+            document.getElementById('reportBody').innerHTML = html;
+        }
+
+        function escHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function inlineFormat(s) {
+            return escHtml(s)
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/`(.+?)`/g, '<code style="font-family:var(--font-mono);font-size:11px;background:var(--surface3);padding:1px 5px;border-radius:3px;color:var(--accent)">$1</code>');
+        }
+
+        // ──────────────────────────────────────────────
+        // COPY MARKDOWN
+        // ──────────────────────────────────────────────
+        document.getElementById('copyMdBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(reportMarkdown).then(() => {
+                const btn = document.getElementById('copyMdBtn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy`;
+                }, 2000);
+            });
+        });
+
+        // ──────────────────────────────────────────────
+        // DOWNLOAD PDF
+        // ──────────────────────────────────────────────
+        document.getElementById('downloadPdfBtn').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const org = document.getElementById('orgName').value.trim() || 'Target Organization';
+            const date = document.getElementById('assessDate').value || '';
+            const assessor = document.getElementById('assessorName').value.trim() || 'Security Assessor';
+            const classification = document.getElementById('classification').value;
+            const version = document.getElementById('reportVersion').value.trim() || '1.0';
+            const assessType = document.getElementById('assessType').value;
+
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const W = 210, M = 18, TW = W - M * 2;
+            let y = 0;
+
+            function addPage() { doc.addPage(); y = 22; }
+            function checkY(need) { if (y + need > 276) addPage(); }
+
+            // ── COVER PAGE ──
+            doc.setFillColor(10, 12, 15);
+            doc.rect(0, 0, W, 297, 'F');
+
+            // Accent bar
+            doc.setFillColor(0, 229, 160);
+            doc.rect(0, 0, 4, 297, 'F');
+
+            // Classification banner
+            doc.setFillColor(180, 30, 30);
+            doc.rect(M, 20, TW, 10, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(255, 255, 255);
+            doc.text(classification, W / 2, 26.5, { align: 'center' });
+
+            // Title
+            doc.setTextColor(0, 229, 160);
+            doc.setFontSize(28);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CYBERSECURITY', M, 80);
+            doc.text('ASSESSMENT', M, 95);
+            doc.setTextColor(255, 255, 255);
+            doc.text('REPORT', M, 110);
+
+            // Divider
+            doc.setDrawColor(0, 229, 160);
+            doc.setLineWidth(0.5);
+            doc.line(M, 118, W - M, 118);
+
+            // Metadata block
+            doc.setFont('courier', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(180, 190, 200);
+            const meta = [
+                ['ORGANIZATION', org],
+                ['ASSESSMENT TYPE', assessType],
+                ['DATE', date],
+                ['LEAD ASSESSOR', assessor],
+                ['REPORT VERSION', 'v' + version],
+                ['CLASSIFICATION', classification],
+            ];
+            let my = 130;
+            meta.forEach(([k, v]) => {
+                doc.setTextColor(100, 120, 130);
+                doc.text(k, M, my);
+                doc.setTextColor(220, 230, 240);
+                doc.text(v, M + 52, my);
+                my += 9;
+            });
+
+            // Footer line
+            doc.setDrawColor(40, 50, 60);
+            doc.setLineWidth(0.3);
+            doc.line(M, 270, W - M, 270);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(70, 80, 90);
+            doc.text('GENERATED BY VULNREPORT — AI CYBERSECURITY ASSESSMENT GENERATOR', M, 276);
+            doc.text('Page 1', W - M, 276, { align: 'right' });
+
+            // ── REPORT PAGES ──
+            doc.addPage();
+            doc.setFillColor(10, 12, 15);
+            doc.rect(0, 0, W, 297, 'F');
+            doc.setFillColor(0, 229, 160);
+            doc.rect(0, 0, 4, 297, 'F');
+            y = 22;
+
+            function pageFooter() {
+                const total = doc.internal.getNumberOfPages();
+                for (let i = 2; i <= total; i++) {
+                    doc.setPage(i);
+                    doc.setFillColor(10, 12, 15);
+                    doc.rect(0, 0, W, 297, 'F');
+                    doc.setFillColor(0, 229, 160);
+                    doc.rect(0, 0, 4, 297, 'F');
+                    doc.setDrawColor(30, 40, 50);
+                    doc.setLineWidth(0.3);
+                    doc.line(M, 283, W - M, 283);
+                    doc.setFontSize(7.5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(70, 80, 90);
+                    doc.text(org + ' — ' + classification, M, 289);
+                    doc.text('Page ' + i + ' of ' + total, W - M, 289, { align: 'right' });
+                }
+            }
+
+            const rlines = reportMarkdown.split('\n');
+            for (const rawLine of rlines) {
+                const line = rawLine.trim();
+                if (!line) { y += 3; continue; }
+
+                if (line.startsWith('## ')) {
+                    checkY(16);
+                    y += 5;
+                    doc.setFillColor(0, 229, 160);
+                    doc.rect(M, y - 4, TW, 10, 'F');
+                    doc.setFont('courier', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text(line.slice(3).toUpperCase(), M + 3, y + 2.5);
+                    y += 12;
+
+                } else if (line.startsWith('### ')) {
+                    checkY(12);
+                    y += 4;
+                    let title = line.slice(4);
+                    const sevMatch = title.match(/\b(CRITICAL|HIGH|MEDIUM|LOW)\b/i);
+                    let sev = '';
+                    if (sevMatch) {
+                        sev = sevMatch[1].toUpperCase();
+                        title = title.replace(sevMatch[0], '').replace(/\[|\]/g, '').trim();
+                    }
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(220, 230, 240);
+                    doc.text(title, M, y);
+                    if (sev) {
+                        const colors = { CRITICAL: [180, 30, 30], HIGH: [200, 100, 30], MEDIUM: [180, 160, 40], LOW: [30, 100, 180] };
+                        const [r, g, b] = colors[sev] || [100, 100, 100];
+                        const tw = doc.getTextWidth(title);
+                        doc.setFillColor(r, g, b);
+                        doc.rect(M + tw + 4, y - 4, doc.getTextWidth(sev) + 6, 6, 'F');
+                        doc.setFont('courier', 'bold');
+                        doc.setFontSize(7);
+                        doc.setTextColor(255, 255, 255);
+                        doc.text(sev, M + tw + 7, y - 0.5);
+                    }
+                    y += 6;
+
+                } else if (line.startsWith('- ') || line.startsWith('* ')) {
+                    const content = line.slice(2).replace(/\*\*/g, '');
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.setTextColor(170, 180, 190);
+                    const wrapped = doc.splitTextToSize('• ' + content, TW - 6);
+                    checkY(wrapped.length * 4.5);
+                    doc.text(wrapped, M + 4, y);
+                    y += wrapped.length * 4.5;
+
+                } else {
+                    const content = line.replace(/\*\*/g, '');
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.setTextColor(170, 180, 190);
+                    const wrapped = doc.splitTextToSize(content, TW);
+                    checkY(wrapped.length * 5);
+                    doc.text(wrapped, M, y);
+                    y += wrapped.length * 5;
+                }
+            }
+
+            pageFooter();
+
+            const slug = org.toLowerCase().replace(/\s+/g, '_').slice(0, 20);
+            doc.save(`${slug}_cybersec_assessment_v${version}.pdf`);
+        });
+    </script>
+</body>
+
+</html>
