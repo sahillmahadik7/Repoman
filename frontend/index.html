@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CyberReport — Vulnerability Assessment Generator</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div class="scanline"></div>
+  <div class="noise"></div>
+
+  <header>
+    <div class="logo">
+      <span class="logo-bracket">[</span>
+      <span class="logo-text">CYBER</span><span class="logo-accent">REPORT</span>
+      <span class="logo-bracket">]</span>
+    </div>
+    <div class="header-right">
+      <span class="status-dot"></span>
+      <span class="status-text">SYSTEM READY</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-label">// VULNERABILITY ASSESSMENT ENGINE v1.0</div>
+      <h1>Generate Professional<br/><span class="highlight">Security Reports</span><br/>From Raw Findings</h1>
+      <p class="hero-sub">Upload your scan outputs, CVE findings, and pentest notes. Get a structured, professional PDF report — instantly.</p>
+    </section>
+
+    <section class="upload-section">
+      <div class="upload-card" id="uploadCard">
+        <div class="upload-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <path d="M24 4L24 32M24 4L16 12M24 4L32 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8 36V40C8 42.2 9.8 44 12 44H36C38.2 44 40 42.2 40 40V36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="upload-title">Drop your findings file here</p>
+        <p class="upload-sub">Supports .txt files — Nmap outputs, CVEs, pentest notes</p>
+        <input type="file" id="fileInput" accept=".txt" hidden />
+        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+          SELECT FILE
+        </button>
+        <div class="drop-hint">or drag and drop</div>
+      </div>
+
+      <div class="file-info" id="fileInfo" style="display:none;">
+        <div class="file-icon">📄</div>
+        <div class="file-details">
+          <span class="file-name" id="fileName"></span>
+          <span class="file-size" id="fileSize"></span>
+        </div>
+        <button class="btn-clear" onclick="clearFile()">✕</button>
+      </div>
+
+      <div class="format-guide">
+        <div class="guide-title">// ACCEPTED INPUT FORMAT</div>
+        <div class="guide-blocks">
+          <div class="guide-block">
+            <span class="guide-tag">[VULN]</span>
+            <span>CVE-2023-XXXX — SQL Injection in /login endpoint</span>
+          </div>
+          <div class="guide-block">
+            <span class="guide-tag">[SCAN]</span>
+            <span>Nmap: Port 22 open, OpenSSH 7.2 (outdated)</span>
+          </div>
+          <div class="guide-block">
+            <span class="guide-tag">[NOTE]</span>
+            <span>Weak password policy found — admin:admin123</span>
+          </div>
+          <div class="guide-block">
+            <span class="guide-tag">[PROOF]</span>
+            <span>Screenshot shows exposed API key in JS source</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-generate" id="generateBtn" onclick="generateReport()" disabled>
+        <span class="btn-icon">⚡</span>
+        GENERATE REPORT
+      </button>
+
+      <div class="progress-wrap" id="progressWrap" style="display:none;">
+        <div class="progress-label" id="progressLabel">Parsing findings...</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-steps" id="progressSteps"></div>
+      </div>
+
+      <div class="error-box" id="errorBox" style="display:none;"></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>CyberReport // Phase 1</span>
+    <span>Built for Security Professionals</span>
+  </footer>
+
+  <script src="upload.js"></script>
+</body>
+</html>

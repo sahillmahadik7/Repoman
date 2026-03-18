@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  /* ===== RESET ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ===== PAGE SETUP ===== */
+  @page {
+    size: A4;
+    margin: 20mm 18mm 20mm 18mm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Courier New', monospace;
+      font-size: 8pt;
+      color: #7a8fa6;
+    }
+    @bottom-left {
+      content: "CONFIDENTIAL — CyberReport";
+      font-family: 'Courier New', monospace;
+      font-size: 8pt;
+      color: #7a8fa6;
+    }
+  }
+
+  /* ===== BASE ===== */
+  body {
+    font-family: 'Georgia', serif;
+    font-size: 10pt;
+    color: #1a2332;
+    background: #ffffff;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Arial', sans-serif;
+    font-weight: 700;
+  }
+
+  /* ===== COVER PAGE ===== */
+  .cover {
+    page-break-after: always;
+    min-height: 250mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #080c10;
+    color: #ffffff;
+    padding: 20mm;
+    margin: -20mm -18mm;
+    padding: 24mm 22mm;
+  }
+
+  .cover-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .cover-logo {
+    font-family: 'Courier New', monospace;
+    font-size: 13pt;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    color: #00ff88;
+  }
+
+  .cover-confidential {
+    font-family: 'Courier New', monospace;
+    font-size: 8pt;
+    color: #ff3b5c;
+    border: 1px solid #ff3b5c;
+    padding: 4px 10px;
+    letter-spacing: 0.15em;
+  }
+
+  .cover-mid {
+    margin-top: 40mm;
+  }
+
+  .cover-label {
+    font-family: 'Courier New', monospace;
+    font-size: 8pt;
+    color: #00ff88;
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+  }
+
+  .cover-title {
+    font-family: 'Arial', sans-serif;
+    font-size: 26pt;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+
+  .cover-risk-badge {
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+    font-size: 10pt;
+    font-weight: bold;
+    padding: 6px 16px;
+    border-radius: 4px;
+    letter-spacing: 0.12em;
+    margin-top: 8px;
+  }
+
+  .risk-CRITICAL { background: #ff3b5c; color: #fff; }
+  .risk-HIGH     { background: #ff6b35; color: #fff; }
+  .risk-MEDIUM   { background: #ffb300; color: #080c10; }
+  .risk-LOW      { background: #00c8ff; color: #080c10; }
+  .risk-INFORMATIONAL { background: #7a8fa6; color: #fff; }
+
+  .cover-bottom {
+    border-top: 1px solid #1e2d3d;
+    padding-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Courier New', monospace;
+    font-size: 8pt;
+    color: #4a6278;
+  }
+
+  /* ===== SECTION HEADINGS ===== */
+  .section-heading {
+    font-family: 'Arial', sans-serif;
+    font-size: 14pt;
+    font-weight: 900;
+    color: #080c10;
+    border-bottom: 3px solid #00ff88;
+    padding-bottom: 5px;
+    margin-top: 14mm;
+    margin-bottom: 6mm;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .sub-heading {
+    font-family: 'Arial', sans-serif;
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1a2332;
+    margin-top: 6mm;
+    margin-bottom: 3mm;
+  }
+
+  /* ===== EXECUTIVE SUMMARY ===== */
+  .exec-summary {
+    background: #f4f7fb;
+    border-left: 4px solid #00c8ff;
+    padding: 10px 14px;
+    font-size: 10pt;
+    line-height: 1.7;
+    color: #2a3a4a;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 6mm;
+  }
+
+  /* ===== TARGET INFO ===== */
+  .meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin-bottom: 6mm;
+  }
+
+  .meta-table td {
+    padding: 5px 10px;
+    border: 1px solid #dde4ee;
+  }
+
+  .meta-table td:first-child {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #4a6278;
+    background: #f4f7fb;
+    width: 30%;
+  }
+
+  /* ===== SEVERITY SUMMARY TABLE ===== */
+  .severity-summary {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8mm;
+    font-size: 9.5pt;
+  }
+
+  .severity-summary th {
+    background: #080c10;
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+    font-size: 9pt;
+    padding: 7px 12px;
+    text-align: left;
+    letter-spacing: 0.05em;
+  }
+
+  .severity-summary td {
+    padding: 6px 12px;
+    border-bottom: 1px solid #dde4ee;
+  }
+
+  .severity-summary tr:nth-child(even) td { background: #f9fbfd; }
+
+  .sev-badge {
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+    font-size: 8pt;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+  }
+
+  .sev-CRITICAL { background: #ff3b5c; color: #fff; }
+  .sev-HIGH     { background: #ff6b35; color: #fff; }
+  .sev-MEDIUM   { background: #ffb300; color: #080c10; }
+  .sev-LOW      { background: #00c8ff; color: #080c10; }
+  .sev-INFORMATIONAL { background: #7a8fa6; color: #fff; }
+
+  /* ===== FINDING CARDS ===== */
+  .finding-card {
+    border: 1px solid #dde4ee;
+    border-radius: 6px;
+    margin-bottom: 5mm;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+
+  .finding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 12px;
+    background: #f4f7fb;
+    border-bottom: 1px solid #dde4ee;
+  }
+
+  .finding-num {
+    font-family: 'Courier New', monospace;
+    font-size: 8pt;
+    color: #7a8fa6;
+  }
+
+  .finding-body {
+    padding: 8px 12px;
+    font-size: 9.5pt;
+    line-height: 1.65;
+  }
+
+  .finding-desc {
+    color: #1a2332;
+    margin-bottom: 4px;
+  }
+
+  .finding-meta {
+    font-family: 'Courier New', monospace;
+    font-size: 8pt;
+    color: #4a6278;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cve-tag {
+    background: #1a2332;
+    color: #00c8ff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 7.5pt;
+  }
+
+  /* ===== SCAN RESULTS & NOTES ===== */
+  .item-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 4mm;
+  }
+
+  .item-list li {
+    padding: 5px 10px;
+    border-left: 3px solid #dde4ee;
+    font-size: 9.5pt;
+    color: #2a3a4a;
+    margin-bottom: 3px;
+    font-family: 'Courier New', monospace;
+    background: #fafbfd;
+  }
+
+  /* ===== RECOMMENDATIONS ===== */
+  .rec-card {
+    border: 1px solid #dde4ee;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 4mm;
+    page-break-inside: avoid;
+  }
+
+  .rec-finding {
+    font-size: 9pt;
+    font-style: italic;
+    color: #4a6278;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px dotted #dde4ee;
+  }
+
+  .rec-text {
+    font-size: 9.5pt;
+    color: #1a2332;
+    line-height: 1.65;
+  }
+
+  /* ===== PROOF SECTION ===== */
+  .proof-item {
+    background: #f4f7fb;
+    border: 1px dashed #b0bec8;
+    border-radius: 4px;
+    padding: 7px 12px;
+    font-size: 9pt;
+    font-family: 'Courier New', monospace;
+    color: #2a3a4a;
+    margin-bottom: 3mm;
+    page-break-inside: avoid;
+  }
+
+  /* ===== PAGE BREAK ===== */
+  .page-break { page-break-before: always; }
+
+  /* ===== DISCLAIMER ===== */
+  .disclaimer {
+    font-size: 8pt;
+    color: #7a8fa6;
+    border-top: 1px solid #dde4ee;
+    padding-top: 5mm;
+    margin-top: 10mm;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- ======= COVER PAGE ======= -->
+<div class="cover">
+  <div class="cover-top">
+    <div class="cover-logo">[ CYBER<span style="color:#ffffff">REPORT </span>]</div>
+    <div class="cover-confidential">CONFIDENTIAL</div>
+  </div>
+
+  <div class="cover-mid">
+    <div class="cover-label">// SECURITY ASSESSMENT REPORT</div>
+    <div class="cover-title">{{ title }}</div>
+    <div>
+      <span class="cover-risk-badge risk-{{ overall_risk }}">
+        OVERALL RISK: {{ overall_risk }}
+      </span>
+    </div>
+  </div>
+
+  <div class="cover-bottom">
+    <span>Assessment Date: {{ date }}</span>
+    <span>Generated: {{ generated_on }}</span>
+    <span>Total Findings: {{ total_findings }}</span>
+  </div>
+</div>
+
+<!-- ======= TABLE OF CONTENTS ======= -->
+<h2 class="section-heading">Table of Contents</h2>
+<table class="meta-table">
+  <tr><td>1.</td><td>Assessment Details</td></tr>
+  <tr><td>2.</td><td>Executive Summary</td></tr>
+  <tr><td>3.</td><td>Severity Overview</td></tr>
+  <tr><td>4.</td><td>Vulnerability Findings</td></tr>
+  {% if scan_results %}<tr><td>5.</td><td>Scan Results</td></tr>{% endif %}
+  {% if notes %}<tr><td>6.</td><td>Assessment Notes</td></tr>{% endif %}
+  {% if proofs %}<tr><td>7.</td><td>Proof of Concepts / Evidence</td></tr>{% endif %}
+  <tr><td>8.</td><td>Recommendations</td></tr>
+</table>
+
+<!-- ======= ASSESSMENT DETAILS ======= -->
+<h2 class="section-heading">1. Assessment Details</h2>
+<table class="meta-table">
+  <tr>
+    <td>Report Title</td>
+    <td>{{ title }}</td>
+  </tr>
+  <tr>
+    <td>Assessment Date</td>
+    <td>{{ date }}</td>
+  </tr>
+  <tr>
+    <td>Report Generated</td>
+    <td>{{ generated_on }}</td>
+  </tr>
+  <tr>
+    <td>Target(s) / Scope</td>
+    <td>{{ targets | join(', ') }}</td>
+  </tr>
+  <tr>
+    <td>Overall Risk Rating</td>
+    <td><span class="sev-badge sev-{{ overall_risk }}">{{ overall_risk }}</span></td>
+  </tr>
+  <tr>
+    <td>Total Findings</td>
+    <td>{{ total_findings }}</td>
+  </tr>
+</table>
+
+<!-- ======= EXECUTIVE SUMMARY ======= -->
+<h2 class="section-heading">2. Executive Summary</h2>
+<div class="exec-summary">{{ executive_summary }}</div>
+
+<!-- ======= SEVERITY OVERVIEW ======= -->
+<h2 class="section-heading">3. Severity Overview</h2>
+<table class="severity-summary">
+  <thead>
+    <tr>
+      <th>Severity</th>
+      <th>Count</th>
+      <th>Risk Level</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for sev in severity_order %}
+    <tr>
+      <td><span class="sev-badge sev-{{ sev }}">{{ sev }}</span></td>
+      <td>{{ severity_stats[sev] }}</td>
+      <td>
+        {% if sev == 'CRITICAL' %}Immediate action required
+        {% elif sev == 'HIGH' %}Urgent remediation needed
+        {% elif sev == 'MEDIUM' %}Remediate within 30 days
+        {% elif sev == 'LOW' %}Remediate within 90 days
+        {% else %}Informational only
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- ======= VULNERABILITY FINDINGS ======= -->
+<div class="page-break"></div>
+<h2 class="section-heading">4. Vulnerability Findings</h2>
+
+{% if vulnerabilities %}
+  {% for vuln in vulnerabilities %}
+  <div class="finding-card">
+    <div class="finding-header">
+      <span class="finding-num">FINDING-{{ "%03d" | format(loop.index) }}</span>
+      <span class="sev-badge sev-{{ vuln.severity }}">{{ vuln.severity }}</span>
+    </div>
+    <div class="finding-body">
+      <div class="finding-desc">{{ vuln.description }}</div>
+      <div class="finding-meta">
+        {% if vuln.cvss %}
+          <span>CVSS: {{ vuln.cvss }}</span>
+        {% endif %}
+        {% for cve in vuln.cve %}
+          <span class="cve-tag">{{ cve }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <p style="color:#7a8fa6; font-style:italic;">No vulnerabilities identified.</p>
+{% endif %}
+
+<!-- ======= SCAN RESULTS ======= -->
+{% if scan_results %}
+<div class="page-break"></div>
+<h2 class="section-heading">5. Scan Results</h2>
+<ul class="item-list">
+  {% for item in scan_results %}
+  <li>{{ item.detail }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<!-- ======= ASSESSMENT NOTES ======= -->
+{% if notes %}
+<h2 class="section-heading">6. Assessment Notes</h2>
+<ul class="item-list">
+  {% for item in notes %}
+  <li>{{ item.detail }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<!-- ======= PROOF OF CONCEPTS ======= -->
+{% if proofs %}
+<h2 class="section-heading">7. Proof of Concepts / Evidence</h2>
+{% for item in proofs %}
+<div class="proof-item">📎 {{ item.detail }}</div>
+{% endfor %}
+{% endif %}
+
+<!-- ======= RECOMMENDATIONS ======= -->
+<div class="page-break"></div>
+<h2 class="section-heading">8. Recommendations</h2>
+
+{% if recommendations %}
+  {% for rec in recommendations %}
+  <div class="rec-card">
+    <div class="rec-finding">
+      <span class="sev-badge sev-{{ rec.severity }}">{{ rec.severity }}</span>
+      &nbsp; {{ rec.finding[:120] }}{% if rec.finding|length > 120 %}...{% endif %}
+    </div>
+    <div class="rec-text">{{ rec.recommendation }}</div>
+  </div>
+  {% endfor %}
+{% else %}
+  <p style="color:#7a8fa6; font-style:italic;">No recommendations generated.</p>
+{% endif %}
+
+<!-- ======= DISCLAIMER ======= -->
+<div class="disclaimer">
+  <strong>Disclaimer:</strong> This report was generated by CyberReport based on the input data provided.
+  The findings and recommendations contained herein are based solely on the information supplied.
+  This report does not constitute a comprehensive security audit. Always engage a qualified security
+  professional to validate findings before remediation. This document is confidential and intended
+  solely for the authorized recipient.
+</div>
+
+</body>
+</html>
