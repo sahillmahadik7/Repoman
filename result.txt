@@ -1,0 +1,116 @@
+{
+  "raw_output": {
+    "open_ports": [
+      {
+        "port": 80,
+        "protocol": "tcp",
+        "service": "http",
+        "product": "",
+        "version": ""
+      },
+      {
+        "port": 443,
+        "protocol": "tcp",
+        "service": "https",
+        "product": "",
+        "version": ""
+      }
+    ],
+    "vulnerabilities": [],
+    "os_matches": []
+  },
+  "confidence": 0.7,
+  "metadata": {
+    "target": "google.com",
+    "nmap_version": "7.94SVN",
+    "platform": "Linux",
+    "total_open_ports": 2,
+    "total_vulnerabilities": 0,
+    "total_os_matches": 0,
+    "scans_executed": [
+      "tcp_connect_fast",
+      "service_detection",
+      "web_ports"
+    ],
+    "scan_wise_counts": {
+      "web_ports": {
+        "open_ports": 2,
+        "vulnerabilities": 0,
+        "os_matches": 0
+      },
+      "tcp_connect_fast": {
+        "open_ports": 2,
+        "vulnerabilities": 0,
+        "os_matches": 0
+      },
+      "service_detection": {
+        "open_ports": 2,
+        "vulnerabilities": 0,
+        "os_matches": 0
+      }
+    },
+    "privilege_mode": "sudoers_nopasswd"
+  },
+  "scan_results": {
+    "web_ports": {
+      "open_ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "service": "http",
+          "product": "",
+          "version": ""
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "service": "https",
+          "product": "",
+          "version": ""
+        }
+      ],
+      "vulnerabilities": [],
+      "os_matches": []
+    },
+    "tcp_connect_fast": {
+      "open_ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "service": "http",
+          "product": "",
+          "version": ""
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "service": "https",
+          "product": "",
+          "version": ""
+        }
+      ],
+      "vulnerabilities": [],
+      "os_matches": []
+    },
+    "service_detection": {
+      "open_ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "service": "http",
+          "product": "gws",
+          "version": ""
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "service": "https",
+          "product": "gws",
+          "version": ""
+        }
+      ],
+      "vulnerabilities": [],
+      "os_matches": []
+    }
+  }
+}
