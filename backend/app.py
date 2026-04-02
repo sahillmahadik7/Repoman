@@ -1,4 +1,3 @@
-# app.py — Main Flask application
 # Handles routes: upload, parse, generate PDF
 
 import os
