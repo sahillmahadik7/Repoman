@@ -1,122 +1,134 @@
 // ===== upload.js =====
-// Handles file selection, drag & drop, and sending to backend
+// Handles file selection, multiple uploads, real progress polling,
+// report preview panel, and PDF download
 
-const uploadCard   = document.getElementById('uploadCard');
-const fileInput    = document.getElementById('fileInput');
-const fileInfo     = document.getElementById('fileInfo');
-const fileName     = document.getElementById('fileName');
-const fileSize     = document.getElementById('fileSize');
-const generateBtn  = document.getElementById('generateBtn');
+const API = 'http://127.0.0.1:5000';
+
+// ===== DOM REFS =====
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const generateBtn = document.getElementById('generateBtn');
 const progressWrap = document.getElementById('progressWrap');
 const progressFill = document.getElementById('progressFill');
-const progressLabel= document.getElementById('progressLabel');
-const progressSteps= document.getElementById('progressSteps');
-const errorBox     = document.getElementById('errorBox');
+const progressLabel = document.getElementById('progressLabel');
+const progressSteps = document.getElementById('progressSteps');
+const errorBox = document.getElementById('errorBox');
+const previewPanel = document.getElementById('previewPanel');
+const metaForm = document.getElementById('metaForm');
 
-let selectedFile = null;
+let selectedFiles = [];
+let pollInterval = null;
 
-// ===== DRAG & DROP =====
-uploadCard.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadCard.classList.add('drag-over');
-});
+// ===== STEPS =====
+const STEPS = [
+  'Reading and parsing uploaded file(s)...',
+  'Merging findings from all files...',
+  'Building report sections...',
+  'Generating PDF...',
+  'Report ready!',
+];
 
-uploadCard.addEventListener('dragleave', () => {
-  uploadCard.classList.remove('drag-over');
-});
-
-uploadCard.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadCard.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
-});
-
-// ===== FILE INPUT CHANGE =====
+// ===== FILE INPUT =====
 fileInput.addEventListener('change', () => {
-  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  const newFiles = Array.from(fileInput.files);
+  addFiles(newFiles);
+  fileInput.value = '';
 });
 
-// ===== HANDLE FILE =====
-function handleFile(file) {
+function addFiles(newFiles) {
   hideError();
+  for (const file of newFiles) {
+    if (!file.name.match(/\.(txt|json)$/i)) {
+      showError(`❌ "${file.name}" is not supported. Only .txt and .json files are accepted.`);
+      continue;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showError(`❌ "${file.name}" exceeds 10MB limit.`);
+      continue;
+    }
+    if (selectedFiles.length >= 5) {
+      showError('❌ Maximum 5 files per upload.');
+      break;
+    }
+    if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+      selectedFiles.push(file);
+    }
+  }
+  renderFileList();
+}
 
-  if (!file.name.endsWith('.txt')) {
-    showError('❌ Only .txt files are supported. Please upload a plain text file.');
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  renderFileList();
+  hideError();
+}
+
+function renderFileList() {
+  fileList.innerHTML = '';
+  if (selectedFiles.length === 0) {
+    generateBtn.disabled = true;
     return;
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    showError('❌ File too large. Maximum size is 5MB.');
-    return;
-  }
+  selectedFiles.forEach((file, i) => {
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    row.innerHTML = `
+      <span class="file-icon-sm">${file.name.endsWith('.json') ? '{}' : '📄'}</span>
+      <div class="file-details">
+        <span class="file-name">${file.name}</span>
+        <span class="file-size">${formatSize(file.size)}</span>
+      </div>
+      <button class="btn-clear" onclick="removeFile(${i})" title="Remove">✕</button>
+    `;
+    fileList.appendChild(row);
+  });
 
-  selectedFile = file;
-  fileName.textContent = file.name;
-  fileSize.textContent = formatSize(file.size);
-  fileInfo.style.display = 'flex';
   generateBtn.disabled = false;
 }
 
-// ===== CLEAR FILE =====
-function clearFile() {
-  selectedFile = null;
-  fileInput.value = '';
-  fileInfo.style.display = 'none';
-  generateBtn.disabled = true;
-  hideError();
-  hideProgress();
-}
-
-// ===== GENERATE REPORT =====
+// ===== GENERATE =====
 async function generateReport() {
-  if (!selectedFile) return;
+  if (selectedFiles.length === 0) return;
 
   hideError();
+  hidePreview();
   generateBtn.disabled = true;
   showProgress();
 
   const formData = new FormData();
-  formData.append('file', selectedFile);
+
+  // Append all files under 'files' key
+  selectedFiles.forEach(f => formData.append('files', f));
+
+  // Append optional metadata
+  if (metaForm) {
+    const title = document.getElementById('reportTitle')?.value.trim();
+    const assessor = document.getElementById('assessorName')?.value.trim();
+    const target = document.getElementById('targetName')?.value.trim();
+    if (title) formData.append('report_title', title);
+    if (assessor) formData.append('assessor_name', assessor);
+    if (target) formData.append('target', target);
+  }
 
   try {
-    // Step 1
-    setStep('Parsing findings file...', 20);
-    await sleep(400);
+    // POST to /generate — returns job_id immediately
+    setStep('Uploading file(s) to server...', 5);
 
-    // Step 2
-    setStep('Categorizing vulnerabilities...', 45);
-    await sleep(300);
-
-    // Step 3
-    setStep('Building report sections...', 65);
-
-    const response = await fetch('http://127.0.0.1:5000/generate', {
+    const res = await fetch(`${API}/generate`, {
       method: 'POST',
       body: formData,
     });
 
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || 'Server error. Please try again.');
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Upload failed. Is the backend running?');
     }
 
-    // Step 4
-    setStep('Generating PDF...', 85);
-    await sleep(300);
+    const { job_id } = await res.json();
 
-    // Step 5 — download blob
-    setStep('Finalizing report...', 100);
-    const blob = await response.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `CyberReport_${Date.now()}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    setStep('✅ Report downloaded successfully!', 100, true);
-    generateBtn.disabled = false;
+    // Start polling
+    startPolling(job_id);
 
   } catch (err) {
     hideProgress();
@@ -125,19 +137,158 @@ async function generateReport() {
   }
 }
 
-// ===== PROGRESS HELPERS =====
-const steps = [
-  'Parsing findings file...',
-  'Categorizing vulnerabilities...',
-  'Building report sections...',
-  'Generating PDF...',
-  'Finalizing report...',
-];
+// ===== REAL PROGRESS POLLING =====
+function startPolling(job_id) {
+  clearInterval(pollInterval);
 
+  pollInterval = setInterval(async () => {
+    try {
+      const res = await fetch(`${API}/progress/${job_id}`);
+      const data = await res.json();
+
+      if (data.error && data.status !== 'error') {
+        // Job not found
+        clearInterval(pollInterval);
+        hideProgress();
+        showError('❌ Job lost. Please try again.');
+        generateBtn.disabled = false;
+        return;
+      }
+
+      // Update progress bar
+      setStep(data.step || '...', data.percent || 0);
+
+      if (data.status === 'error') {
+        clearInterval(pollInterval);
+        hideProgress();
+        showError('❌ ' + (data.error || 'Unknown error.'));
+        generateBtn.disabled = false;
+
+      } else if (data.status === 'done') {
+        clearInterval(pollInterval);
+        setStep('✅ Report ready!', 100, true);
+
+        // Trigger download
+        await sleep(600);
+        triggerDownload(job_id);
+
+        // Show preview
+        await loadPreview(job_id);
+
+        generateBtn.disabled = false;
+      }
+
+    } catch (e) {
+      clearInterval(pollInterval);
+      hideProgress();
+      showError('❌ Lost connection to server. Is the backend still running?');
+      generateBtn.disabled = false;
+    }
+  }, 800);
+}
+
+async function triggerDownload(job_id) {
+  const a = document.createElement('a');
+  a.href = `${API}/download/${job_id}`;
+  a.download = `CyberReport_${Date.now()}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ===== REPORT PREVIEW =====
+async function loadPreview(job_id) {
+  try {
+    const res = await fetch(`${API}/preview/${job_id}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    renderPreview(data);
+  } catch (e) {
+    // Preview is optional — silently fail
+  }
+}
+
+function renderPreview(data) {
+  if (!previewPanel) return;
+
+  const riskColors = {
+    CRITICAL: '#c0392b', HIGH: '#e67e22', MEDIUM: '#f39c12',
+    LOW: '#2980b9', INFORMATIONAL: '#7f8c8d'
+  };
+  const riskColor = riskColors[data.overall_risk] || '#7f8c8d';
+
+  const stats = data.severity_stats || {};
+  const statsHtml = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFORMATIONAL'].map(s => `
+    <div class="prev-stat">
+      <span class="prev-stat-label">${s}</span>
+      <span class="prev-stat-count" style="color:${riskColors[s]}">${stats[s] || 0}</span>
+    </div>
+  `).join('');
+
+  const vulnsHtml = (data.vulnerabilities || []).slice(0, 5).map(v => `
+    <div class="prev-finding">
+      <span class="prev-sev" style="color:${riskColors[v.severity]}">[${v.severity}]</span>
+      <span class="prev-desc">${v.description}</span>
+    </div>
+  `).join('') || '<p class="prev-empty">No vulnerability findings.</p>';
+
+  const moreCount = (data.vulnerabilities || []).length - 5;
+
+  previewPanel.innerHTML = `
+    <div class="preview-header">
+      <div class="preview-title-row">
+        <span class="preview-tag">// REPORT PREVIEW</span>
+        <button class="btn-close-preview" onclick="hidePreview()">✕ Close</button>
+      </div>
+      <h3 class="preview-report-title">${data.title || 'Vulnerability Assessment Report'}</h3>
+      <div class="preview-meta">
+        <span>🎯 ${(data.targets || []).join(', ') || 'N/A'}</span>
+        <span>📅 ${data.date || 'N/A'}</span>
+        <span>📊 ${data.total_findings || 0} findings</span>
+        <span class="preview-risk" style="color:${riskColor}">⚠ Overall: ${data.overall_risk}</span>
+      </div>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-section-title">Severity Breakdown</div>
+      <div class="prev-stats-row">${statsHtml}</div>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-section-title">Executive Summary</div>
+      <p class="prev-summary">${data.executive_summary || ''}</p>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-section-title">Top Findings</div>
+      ${vulnsHtml}
+      ${moreCount > 0 ? `<p class="prev-more">+ ${moreCount} more findings in the full PDF report</p>` : ''}
+    </div>
+  `;
+
+  previewPanel.style.display = 'block';
+  previewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hidePreview() {
+  if (previewPanel) previewPanel.style.display = 'none';
+}
+
+// ===== SAMPLE FILE DOWNLOAD =====
+function downloadSample() {
+  const a = document.createElement('a');
+  a.href = `${API}/sample`;
+  a.download = 'sample_findings.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ===== PROGRESS UI =====
 function showProgress() {
   progressWrap.style.display = 'block';
   progressSteps.innerHTML = '';
-  steps.forEach((s, i) => {
+  STEPS.forEach((s, i) => {
     const div = document.createElement('div');
     div.className = 'step-line';
     div.id = `step-${i}`;
@@ -150,21 +301,17 @@ function setStep(label, percent, done = false) {
   progressLabel.textContent = label;
   progressFill.style.width = percent + '%';
 
-  const stepIndex = steps.indexOf(label);
-  if (stepIndex >= 0) {
-    for (let i = 0; i < steps.length; i++) {
+  const idx = STEPS.indexOf(label);
+  if (idx >= 0) {
+    for (let i = 0; i < STEPS.length; i++) {
       const el = document.getElementById(`step-${i}`);
       if (!el) continue;
-      if (i < stepIndex) {
-        el.innerHTML = `<span class="step-done">✓</span> ${steps[i]}`;
-      } else if (i === stepIndex) {
-        el.innerHTML = `<span class="step-active">▶</span> ${steps[i]}`;
-      }
+      if (i < idx) el.innerHTML = `<span class="step-done">✓</span> ${STEPS[i]}`;
+      else if (i === idx) el.innerHTML = `<span class="step-active">▶</span> ${STEPS[i]}`;
     }
   }
-
   if (done) {
-    steps.forEach((s, i) => {
+    STEPS.forEach((s, i) => {
       const el = document.getElementById(`step-${i}`);
       if (el) el.innerHTML = `<span class="step-done">✓</span> ${s}`;
     });
@@ -175,12 +322,11 @@ function hideProgress() {
   progressWrap.style.display = 'none';
 }
 
-// ===== ERROR HELPERS =====
+// ===== ERROR =====
 function showError(msg) {
   errorBox.textContent = msg;
   errorBox.style.display = 'block';
 }
-
 function hideError() {
   errorBox.textContent = '';
   errorBox.style.display = 'none';
@@ -192,7 +338,6 @@ function formatSize(bytes) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
-
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(r => setTimeout(r, ms));
 }

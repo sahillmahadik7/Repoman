@@ -13,14 +13,16 @@ from reportlab.platypus import (
     HRFlowable, PageBreak
 )
 from reportlab.platypus import KeepTogether
+from reportlab.graphics.shapes import Drawing, Rect, String, Line
+from reportlab.graphics import renderPDF
 from datetime import datetime
 
 # ===== COLORS =====
-BLACK = colors.HexColor('#000000')
-WHITE = colors.HexColor('#ffffff')
-DARK_GRAY = colors.HexColor('#1a1a2e')
-MID_GRAY = colors.HexColor('#4a4a6a')
-LIGHT_GRAY = colors.HexColor('#f5f5f5')
+BLACK       = colors.HexColor('#000000')
+WHITE       = colors.HexColor('#ffffff')
+DARK_GRAY   = colors.HexColor('#1a1a2e')
+MID_GRAY    = colors.HexColor('#4a4a6a')
+LIGHT_GRAY  = colors.HexColor('#f5f5f5')
 BORDER_GRAY = colors.HexColor('#cccccc')
 
 SEV_COLORS = {
@@ -53,8 +55,7 @@ def make_page_template(canvas, doc):
     # --- Header: left = report title, right = page number ---
     canvas.setFont('Helvetica-Bold', 8)
     canvas.setFillColor(DARK_GRAY)
-    canvas.drawString(15*mm, height - 9*mm,
-                      'CYBERSECURITY VULNERABILITY ASSESSMENT REPORT')
+    canvas.drawString(15*mm, height - 9*mm, 'CYBERSECURITY VULNERABILITY ASSESSMENT REPORT')
 
     canvas.setFont('Helvetica', 8)
     canvas.setFillColor(MID_GRAY)
@@ -68,8 +69,7 @@ def make_page_template(canvas, doc):
     # --- Footer: left = confidential, right = date ---
     canvas.setFont('Helvetica', 7)
     canvas.setFillColor(MID_GRAY)
-    canvas.drawString(
-        15*mm, 6*mm, 'CONFIDENTIAL — For authorized personnel only')
+    canvas.drawString(15*mm, 6*mm, 'CONFIDENTIAL — For authorized personnel only')
     canvas.drawRightString(
         width - 15*mm, 6*mm,
         f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M")}'
@@ -164,32 +164,32 @@ def build_cover(report_data, styles):
     width, height = A4
 
     # Dark background block — simulated with a Table
-    target_str = ', '.join(report_data['targets'])
-    date_str = report_data['date']
-    title_str = report_data['title']
-    overall = report_data['overall_risk']
-    total = report_data['total_findings']
+    target_str  = ', '.join(report_data['targets'])
+    date_str    = report_data['date']
+    title_str   = report_data['title']
+    overall     = report_data['overall_risk']
+    total       = report_data['total_findings']
 
     cover_content = [
         [Paragraph('', styles['body'])],  # spacer row
         [Paragraph('CYBERSECURITY', ParagraphStyle('ct', fontName='Helvetica', fontSize=11,
-                                                   textColor=colors.HexColor('#aaaaaa'), leading=14))],
+            textColor=colors.HexColor('#aaaaaa'), leading=14))],
         [Paragraph('Vulnerability Assessment Report', ParagraphStyle('ct2', fontName='Helvetica-Bold',
-                                                                     fontSize=24, textColor=WHITE, leading=30))],
+            fontSize=24, textColor=WHITE, leading=30))],
         [Paragraph('&nbsp;', styles['body'])],
         [Paragraph(title_str, ParagraphStyle('ct3', fontName='Helvetica-Bold',
-                                             fontSize=14, textColor=colors.HexColor('#00cc88'), leading=18))],
+            fontSize=14, textColor=colors.HexColor('#00cc88'), leading=18))],
         [Paragraph('&nbsp;', styles['body'])],
         [Paragraph(f'Target(s): {target_str}', ParagraphStyle('cm', fontName='Helvetica',
-                                                              fontSize=10, textColor=colors.HexColor('#cccccc'), leading=14))],
+            fontSize=10, textColor=colors.HexColor('#cccccc'), leading=14))],
         [Paragraph(f'Assessment Date: {date_str}', ParagraphStyle('cm2', fontName='Helvetica',
-                                                                  fontSize=10, textColor=colors.HexColor('#cccccc'), leading=14))],
+            fontSize=10, textColor=colors.HexColor('#cccccc'), leading=14))],
         [Paragraph(f'Total Findings: {total}  |  Overall Risk: {overall}',
-                   ParagraphStyle('cm3', fontName='Helvetica-Bold',
-                                  fontSize=10, textColor=colors.HexColor('#ffffff'), leading=14))],
+            ParagraphStyle('cm3', fontName='Helvetica-Bold',
+            fontSize=10, textColor=colors.HexColor('#ffffff'), leading=14))],
         [Paragraph('&nbsp;', styles['body'])],
         [Paragraph('CONFIDENTIAL', ParagraphStyle('conf', fontName='Helvetica-Bold',
-                                                  fontSize=9, textColor=colors.HexColor('#ff4444'), leading=12))],
+            fontSize=9, textColor=colors.HexColor('#ff4444'), leading=12))],
     ]
 
     cover_table = Table(cover_content, colWidths=[170*mm])
@@ -207,6 +207,109 @@ def build_cover(report_data, styles):
     elements.append(PageBreak())
     return elements
 
+
+# ===== TABLE OF CONTENTS =====
+def build_toc(report_data, styles):
+    elements = []
+    elements += section_divider('Table of Contents', styles)
+
+    has_ports = bool(report_data.get('ports_table'))
+    has_scans = bool(report_data.get('scan_results'))
+    has_notes = bool(report_data.get('notes'))
+    has_proof = bool(report_data.get('proofs'))
+
+    toc_entries = [
+        ('1.', 'Executive Summary'),
+        ('2.', 'Findings Summary & Risk Chart'),
+    ]
+    n = 3
+    if has_ports:
+        toc_entries.append((f'{n}.', 'Network Enumeration — Open Ports')); n += 1
+    toc_entries.append((f'{n}.', 'Vulnerability Findings')); n += 1
+    if has_scans:
+        toc_entries.append((f'{n}.', 'Scan Tool Output')); n += 1
+    if has_notes:
+        toc_entries.append((f'{n}.', 'Penetration Test Notes')); n += 1
+    if has_proof:
+        toc_entries.append((f'{n}.', 'Evidence & Proof of Concept')); n += 1
+    toc_entries.append((f'{n}.', 'Remediation Recommendations'))
+
+    toc_style = ParagraphStyle('toc', fontName='Helvetica', fontSize=10,
+        textColor=colors.HexColor('#1a1a2e'), leading=18)
+    toc_num_style = ParagraphStyle('tocn', fontName='Helvetica-Bold', fontSize=10,
+        textColor=colors.HexColor('#1a1a2e'), leading=18)
+
+    for num, title in toc_entries:
+        row = Table(
+            [[Paragraph(num, toc_num_style), Paragraph(title, toc_style)]],
+            colWidths=[12*mm, 158*mm]
+        )
+        row.setStyle(TableStyle([
+            ('TOPPADDING',    (0,0), (-1,-1), 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+            ('LINEBELOW',     (0,0), (-1,-1), 0.3, colors.HexColor('#dddddd')),
+        ]))
+        elements.append(row)
+
+    elements.append(PageBreak())
+    return elements
+
+
+# ===== SEVERITY BAR CHART =====
+def build_severity_chart(report_data, styles):
+    """Draw a horizontal bar chart of severity counts using reportlab graphics."""
+    stats    = report_data['severity_stats']
+    order    = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFORMATIONAL']
+    bar_colors = {
+        'CRITICAL':      colors.HexColor('#c0392b'),
+        'HIGH':          colors.HexColor('#e67e22'),
+        'MEDIUM':        colors.HexColor('#f39c12'),
+        'LOW':           colors.HexColor('#2980b9'),
+        'INFORMATIONAL': colors.HexColor('#7f8c8d'),
+    }
+
+    max_count = max((stats.get(s, 0) for s in order), default=1)
+    if max_count == 0:
+        max_count = 1
+
+    chart_width  = 130 * mm
+    bar_height   = 10 * mm
+    bar_gap      = 4  * mm
+    label_width  = 32 * mm
+    count_width  = 12 * mm
+    total_height = len(order) * (bar_height + bar_gap) + 10
+
+    drawing = Drawing(chart_width + label_width + count_width, total_height)
+
+    for i, sev in enumerate(order):
+        count  = stats.get(sev, 0)
+        y      = total_height - (i + 1) * (bar_height + bar_gap)
+        bar_w  = (count / max_count) * chart_width if count > 0 else 2
+
+        # Background track
+        drawing.add(Rect(label_width, y, chart_width, bar_height,
+            fillColor=colors.HexColor('#f0f0f0'), strokeColor=None))
+
+        # Filled bar
+        drawing.add(Rect(label_width, y, bar_w, bar_height,
+            fillColor=bar_colors[sev], strokeColor=None))
+
+        # Label (left)
+        drawing.add(String(0, y + 2.5*mm, sev,
+            fontName='Helvetica-Bold', fontSize=8,
+            fillColor=colors.HexColor('#1a1a2e')))
+
+        # Count (right)
+        drawing.add(String(label_width + chart_width + 3*mm, y + 2.5*mm, str(count),
+            fontName='Helvetica-Bold', fontSize=9,
+            fillColor=bar_colors[sev]))
+
+    from reportlab.platypus import Flowable
+    class ChartFlowable(Flowable):
+        def __init__(self, d): self.d = d; self.width = d.width; self.height = d.height
+        def draw(self): renderPDF.draw(self.d, self.canv, 0, 0)
+
+    return [ChartFlowable(drawing), Spacer(1, 4*mm)]
 
 # ===== SECTION DIVIDER =====
 def section_divider(title, styles):
@@ -226,8 +329,7 @@ def severity_badge(severity):
 def build_executive_summary(report_data, styles):
     elements = []
     elements += section_divider('1. Executive Summary', styles)
-    elements.append(
-        Paragraph(report_data['executive_summary'], styles['body']))
+    elements.append(Paragraph(report_data['executive_summary'], styles['body']))
     elements.append(Spacer(1, 4*mm))
     return elements
 
@@ -246,11 +348,9 @@ def build_stats_table(report_data, styles):
 
     for sev in severity_order:
         count = stats.get(sev, 0)
-        data.append(
-            [sev, str(count), '●' * min(count, 5) if count > 0 else '—'])
+        data.append([sev, str(count), '●' * min(count, 5) if count > 0 else '—'])
 
-    data.append(
-        ['TOTAL', str(report_data['total_findings']), f'Overall: {overall}'])
+    data.append(['TOTAL', str(report_data['total_findings']), f'Overall: {overall}'])
 
     t = Table(data, colWidths=[55*mm, 30*mm, 85*mm])
     t.setStyle(TableStyle([
@@ -274,39 +374,39 @@ def build_stats_table(report_data, styles):
         # Grid
         ('GRID',         (0, 0), (-1, -1), 0.5, BORDER_GRAY),
         ('TOPPADDING',   (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING',(0, 0), (-1, -1), 5),
         ('LEFTPADDING',  (0, 0), (-1, -1), 8),
     ]))
 
     elements.append(t)
     elements.append(Spacer(1, 4*mm))
+
+    # Severity bar chart
+    elements += build_severity_chart(report_data, styles)
+
     return elements
-
-
-# ===== VULNERABILITY FINDINGS =====
 def build_findings(report_data, styles):
     elements = []
     elements += section_divider('4. Vulnerability Findings', styles)
 
     vulns = report_data['vulnerabilities']
     if not vulns:
-        elements.append(
-            Paragraph('No vulnerabilities identified.', styles['body']))
+        elements.append(Paragraph('No vulnerabilities identified.', styles['body']))
         return elements
 
     for i, v in enumerate(vulns, 1):
-        sev = v['severity']
-        sev_col = SEV_COLORS.get(sev, BLACK)
-        sev_bg = SEV_BG.get(sev, WHITE)
-        cves = ', '.join(v['cve']) if v['cve'] else 'N/A'
-        cvss = v['cvss'] if v['cvss'] else 'N/A'
+        sev      = v['severity']
+        sev_col  = SEV_COLORS.get(sev, BLACK)
+        sev_bg   = SEV_BG.get(sev, WHITE)
+        cves     = ', '.join(v['cve']) if v['cve'] else 'N/A'
+        cvss     = v['cvss'] if v['cvss'] else 'N/A'
 
         # Finding block as a table
         block_data = [
             [
                 Paragraph(f'Finding #{i}', styles['label']),
                 Paragraph(sev, ParagraphStyle('sev', fontName='Helvetica-Bold',
-                                              fontSize=9, textColor=sev_col, alignment=TA_RIGHT))
+                    fontSize=9, textColor=sev_col, alignment=TA_RIGHT))
             ],
             [
                 Paragraph(v['description'], styles['finding_title']),
@@ -364,7 +464,7 @@ def build_ports_table(report_data, styles):
             p['product'],
             p['version'],
             Paragraph(p['risk'], ParagraphStyle('risk', fontName='Helvetica-Bold',
-                                                fontSize=8, textColor=sev_col, alignment=TA_CENTER)),
+                fontSize=8, textColor=sev_col, alignment=TA_CENTER)),
         ])
 
     t = Table(data, colWidths=[18*mm, 22*mm, 30*mm, 35*mm, 30*mm, 25*mm])
@@ -377,7 +477,7 @@ def build_ports_table(report_data, styles):
         ('FONTNAME',      (0, 1), (-1, -1), 'Helvetica'),
         ('FONTSIZE',      (0, 1), (-1, -1), 9),
         ('ALIGN',         (0, 1), (1, -1),  'CENTER'),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [WHITE, LIGHT_GRAY]),
+        ('ROWBACKGROUNDS',(0, 1), (-1, -1), [WHITE, LIGHT_GRAY]),
         ('GRID',          (0, 0), (-1, -1), 0.5, BORDER_GRAY),
         ('TOPPADDING',    (0, 0), (-1, -1), 5),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
@@ -441,23 +541,22 @@ def build_recommendations(report_data, styles):
     elements += section_divider('8. Remediation Recommendations', styles)
 
     for i, r in enumerate(recs, 1):
-        sev = r['severity']
+        sev     = r['severity']
         sev_col = SEV_COLORS.get(sev, BLACK)
 
         finding_text = Paragraph(
             f'<b>{i}. [{sev}]</b> {r["finding"]}',
             ParagraphStyle('rt', fontName='Helvetica', fontSize=9,
-                           textColor=colors.HexColor('#1a1a1a'), leading=13)
+                textColor=colors.HexColor('#1a1a1a'), leading=13)
         )
         rec_text = Paragraph(
             f'→ {r["recommendation"]}',
             ParagraphStyle('rec', fontName='Helvetica', fontSize=9,
-                           textColor=colors.HexColor('#2c5282'), leading=13,
-                           leftIndent=10)
+                textColor=colors.HexColor('#2c5282'), leading=13,
+                leftIndent=10)
         )
 
-        elements.append(KeepTogether(
-            [finding_text, rec_text, Spacer(1, 3*mm)]))
+        elements.append(KeepTogether([finding_text, rec_text, Spacer(1, 3*mm)]))
 
     return elements
 
@@ -481,11 +580,14 @@ def generate_pdf(report_data, output_path):
         subject='Vulnerability Assessment Report',
     )
 
-    styles = build_styles()
+    styles   = build_styles()
     elements = []
 
     # --- Cover Page ---
     elements += build_cover(report_data, styles)
+
+    # --- Table of Contents ---
+    elements += build_toc(report_data, styles)
 
     # --- Report Sections ---
     elements += build_executive_summary(report_data, styles)
@@ -498,7 +600,6 @@ def generate_pdf(report_data, output_path):
     elements += build_recommendations(report_data, styles)
 
     # --- Build PDF ---
-    doc.build(elements, onFirstPage=make_page_template,
-              onLaterPages=make_page_template)
+    doc.build(elements, onFirstPage=make_page_template, onLaterPages=make_page_template)
 
     return output_path

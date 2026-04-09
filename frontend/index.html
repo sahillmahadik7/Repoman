@@ -1,244 +1,144 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CyberReport — Vulnerability Assessment Generator</title>
   <link rel="stylesheet" href="style.css" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Syne:wght@400;500;700&display=swap"
-    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Syne:wght@400;500;700&display=swap" rel="stylesheet"/>
 </head>
-
 <body>
-
   <div class="scanline"></div>
   <div class="noise"></div>
 
-  <!-- ===== NAVBAR ===== -->
   <nav class="navbar">
-    <div class="nav-logo">
-      <span class="logo-bracket">[</span><span class="logo-text">CYBER</span><span
-        class="logo-accent">REPORT</span><span class="logo-bracket">]</span>
-    </div>
-
+    <div class="nav-logo"><span class="logo-bracket">[</span><span class="logo-text">CYBER</span><span class="logo-accent">REPORT</span><span class="logo-bracket">]</span></div>
     <ul class="nav-links">
       <li><a href="#" class="nav-link active">Home</a></li>
       <li><a href="#about" class="nav-link">About</a></li>
       <li><a href="#help" class="nav-link">Help</a></li>
       <li><a href="https://github.com" target="_blank" class="nav-link nav-github">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-          </svg>
-          GitHub
-        </a></li>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a></li>
     </ul>
-
     <div class="nav-right">
-      <div class="status-indicator">
-        <span class="status-dot"></span>
-        <span class="status-text">ONLINE</span>
-      </div>
-
-      <!-- Theme Toggle -->
-      <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" onclick="toggleTheme()">
-        <span class="toggle-icon dark-icon">🌙</span>
-        <span class="toggle-icon light-icon">☀️</span>
-      </button>
+      <div class="status-indicator"><span class="status-dot"></span><span class="status-text">ONLINE</span></div>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="toggle-icon dark-icon">🌙</span><span class="toggle-icon light-icon">☀️</span></button>
     </div>
   </nav>
 
-  <!-- ===== MAIN ===== -->
   <main>
-
-    <!-- Hero -->
     <section class="hero">
-      <div class="hero-label">// VULNERABILITY ASSESSMENT ENGINE v1.0</div>
-      <h1>Generate Professional<br /><span class="highlight">Security Reports</span><br />From Raw Findings</h1>
-      <p class="hero-sub">Upload your scan outputs, CVE findings, and pentest notes.<br />Get a structured, professional
-        PDF report — instantly.</p>
+      <div class="hero-label">// VULNERABILITY ASSESSMENT ENGINE v2.0</div>
+      <h1>Generate Professional<br/><span class="highlight">Security Reports</span><br/>From Raw Findings</h1>
+      <p class="hero-sub">Upload scan outputs, CVE findings, and pentest notes.<br/>Get a structured PDF with ToC, risk chart, and remediation — instantly.</p>
     </section>
 
-    <!-- Upload Section -->
     <section class="upload-section">
 
-      <!-- Upload Card (button only, no drag/drop UI) -->
       <div class="upload-card" id="uploadCard">
         <div class="upload-icon">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
-            <path d="M24 4L24 32M24 4L16 12M24 4L32 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-              stroke-linejoin="round" />
-            <path d="M8 36V40C8 42.2 9.8 44 12 44H36C38.2 44 40 42.2 40 40V36" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" />
+            <path d="M24 4L24 32M24 4L16 12M24 4L32 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 36V40C8 42.2 9.8 44 12 44H36C38.2 44 40 42.2 40 40V36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </div>
-        <p class="upload-title">Select your findings file</p>
-        <p class="upload-sub">Accepts <code>.txt</code> files — max 5MB</p>
-        <input type="file" id="fileInput" accept=".txt" hidden />
-        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
-          SELECT FILE
-        </button>
-      </div>
-
-      <!-- File Info (shown after selection) -->
-      <div class="file-info" id="fileInfo" style="display:none;">
-        <div class="file-icon">📄</div>
-        <div class="file-details">
-          <span class="file-name" id="fileName"></span>
-          <span class="file-size" id="fileSize"></span>
+        <p class="upload-title">Select your findings file(s)</p>
+        <p class="upload-sub">Accepts <code>.txt</code> and <code>.json</code> — up to 5 files, 10MB each</p>
+        <input type="file" id="fileInput" accept=".txt,.json" multiple hidden />
+        <div class="upload-btn-row">
+          <button class="btn-upload" onclick="document.getElementById('fileInput').click()">SELECT FILE(S)</button>
+          <button class="btn-sample" onclick="downloadSample()">⬇ SAMPLE FILE</button>
         </div>
-        <button class="btn-clear" onclick="clearFile()">✕</button>
       </div>
 
-      <!-- Generate Button -->
+      <div class="file-list" id="fileList"></div>
+
+      <div class="meta-form" id="metaForm">
+        <div class="meta-form-title">// REPORT METADATA <span class="meta-optional">(optional)</span></div>
+        <div class="meta-fields">
+          <div class="meta-field">
+            <label for="reportTitle">Report Title</label>
+            <input type="text" id="reportTitle" placeholder="e.g. Web App Pentest — ACME Corp" />
+          </div>
+          <div class="meta-field">
+            <label for="assessorName">Assessor Name</label>
+            <input type="text" id="assessorName" placeholder="e.g. John Smith" />
+          </div>
+          <div class="meta-field">
+            <label for="targetName">Target (if not in file)</label>
+            <input type="text" id="targetName" placeholder="e.g. 192.168.1.1 or acme.com" />
+          </div>
+        </div>
+      </div>
+
       <button class="btn-generate" id="generateBtn" onclick="generateReport()" disabled>
-        <span class="btn-icon">⚡</span>
-        GENERATE REPORT
+        <span class="btn-icon">⚡</span> GENERATE REPORT
       </button>
 
-      <!-- Progress -->
       <div class="progress-wrap" id="progressWrap" style="display:none;">
-        <div class="progress-label" id="progressLabel">Parsing findings...</div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
+        <div class="progress-label" id="progressLabel">Starting...</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
         <div class="progress-steps" id="progressSteps"></div>
       </div>
 
-      <!-- Error -->
       <div class="error-box" id="errorBox" style="display:none;"></div>
+      <div class="preview-panel" id="previewPanel" style="display:none;"></div>
 
     </section>
 
-    <!-- ===== ABOUT SECTION ===== -->
     <section class="info-section" id="about">
       <div class="info-card">
-        <div class="info-card-header">
-          <span class="info-tag">// ABOUT</span>
-          <h2>What is CyberReport?</h2>
-        </div>
-        <p>CyberReport is a lightweight, offline-first vulnerability assessment report generator built for security
-          professionals. Upload a structured findings file and instantly receive a clean, professional PDF — no cloud,
-          no AI API, no third-party processing.</p>
+        <div class="info-card-header"><span class="info-tag">// ABOUT</span><h2>What is CyberReport?</h2></div>
+        <p>CyberReport is a lightweight, offline-first vulnerability assessment report generator. Upload structured findings files and get a professional PDF — complete with Table of Contents, severity chart, open ports table, and remediation guidance. No cloud, no AI API, no third-party processing.</p>
         <div class="about-grid">
-          <div class="about-item">
-            <span class="about-icon">🔒</span>
-            <span class="about-label">100% Offline</span>
-            <span class="about-desc">Your data never leaves your machine</span>
-          </div>
-          <div class="about-item">
-            <span class="about-icon">⚡</span>
-            <span class="about-label">Instant PDF</span>
-            <span class="about-desc">Report generated in seconds</span>
-          </div>
-          <div class="about-item">
-            <span class="about-icon">🎯</span>
-            <span class="about-label">Auto Severity</span>
-            <span class="about-desc">CVE & risk classification built-in</span>
-          </div>
-          <div class="about-item">
-            <span class="about-icon">📋</span>
-            <span class="about-label">Pro Format</span>
-            <span class="about-desc">Executive summary auto-generated</span>
-          </div>
+          <div class="about-item"><span class="about-icon">🔒</span><span class="about-label">100% Offline</span><span class="about-desc">Your data never leaves your machine</span></div>
+          <div class="about-item"><span class="about-icon">⚡</span><span class="about-label">Real Progress</span><span class="about-desc">Live backend polling, not fake timers</span></div>
+          <div class="about-item"><span class="about-icon">📁</span><span class="about-label">Multi-file</span><span class="about-desc">Merge Nmap JSON + manual notes together</span></div>
+          <div class="about-item"><span class="about-icon">📋</span><span class="about-label">Pro Format</span><span class="about-desc">ToC, risk chart, exec summary, remediation</span></div>
         </div>
       </div>
     </section>
 
-    <!-- ===== HELP SECTION ===== -->
     <section class="info-section" id="help">
       <div class="info-card">
-        <div class="info-card-header">
-          <span class="info-tag">// HELP</span>
-          <h2>How to Format Your File</h2>
-        </div>
-        <p>Your <code>.txt</code> file should use the following tags at the start of each line. Each tag tells the
-          report engine how to categorize that finding.</p>
-
+        <div class="info-card-header"><span class="info-tag">// HELP</span><h2>How to Format Your File</h2></div>
+        <p>Your <code>.txt</code> file uses tags below. Your <code>.json</code> file (Nmap/tool output) is auto-detected and parsed directly. You can upload both together.</p>
         <div class="help-tags">
-          <div class="help-row">
-            <span class="help-tag vuln">[VULN]</span>
-            <div class="help-detail">
-              <strong>Vulnerability Finding</strong>
-              <code>CVE-2023-1234 — SQL Injection found in /login endpoint</code>
-            </div>
-          </div>
-          <div class="help-row">
-            <span class="help-tag scan">[SCAN]</span>
-            <div class="help-detail">
-              <strong>Scan Tool Output</strong>
-              <code>Nmap: Port 22 open — OpenSSH 7.2 (outdated version)</code>
-            </div>
-          </div>
-          <div class="help-row">
-            <span class="help-tag note">[NOTE]</span>
-            <div class="help-detail">
-              <strong>Pentest Notes</strong>
-              <code>Weak password policy found — admin:admin123 still valid</code>
-            </div>
-          </div>
-          <div class="help-row">
-            <span class="help-tag proof">[PROOF]</span>
-            <div class="help-detail">
-              <strong>Evidence / Screenshots</strong>
-              <code>Screenshot shows exposed API key in JS source file</code>
-            </div>
-          </div>
-          <div class="help-row">
-            <span class="help-tag target">[TARGET]</span>
-            <div class="help-detail">
-              <strong>Target Information</strong>
-              <code>192.168.1.1 — Internal web server</code>
-            </div>
-          </div>
-          <div class="help-row">
-            <span class="help-tag date">[DATE]</span>
-            <div class="help-detail">
-              <strong>Assessment Date</strong>
-              <code>2024-11-15</code>
-            </div>
-          </div>
+          <div class="help-row"><span class="help-tag vuln">[VULN]</span><div class="help-detail"><strong>Vulnerability Finding</strong><code>CVE-2023-1234 — SQL Injection in /login endpoint</code></div></div>
+          <div class="help-row"><span class="help-tag scan">[SCAN]</span><div class="help-detail"><strong>Scan Tool Output</strong><code>Nmap: Port 22 open — OpenSSH 7.2 (outdated)</code></div></div>
+          <div class="help-row"><span class="help-tag note">[NOTE]</span><div class="help-detail"><strong>Pentest Notes</strong><code>Weak password — admin:admin123 still valid</code></div></div>
+          <div class="help-row"><span class="help-tag proof">[PROOF]</span><div class="help-detail"><strong>Evidence</strong><code>Screenshot shows exposed API key in JS source</code></div></div>
+          <div class="help-row"><span class="help-tag target">[TARGET]</span><div class="help-detail"><strong>Target Info</strong><code>192.168.1.1 — Internal web server</code></div></div>
+          <div class="help-row"><span class="help-tag date">[DATE]</span><div class="help-detail"><strong>Assessment Date</strong><code>2024-11-15</code></div></div>
         </div>
-
-        <div class="help-note">
-          <span>💡</span>
-          <span>Multi-line entries are supported — just continue writing on the next line without a new tag. A blank
-            line ends the current block.</span>
-        </div>
+        <div class="help-note"><span>💡</span><span>Upload multiple files at once — e.g. one JSON from Nmap and one TXT with manual notes. They'll be merged into a single professional report.</span></div>
       </div>
     </section>
-
   </main>
 
   <footer>
-    <span>CyberReport // Phase 1</span>
+    <span>CyberReport // v2.0</span>
     <span>Built for Security Professionals</span>
   </footer>
 
   <script src="upload.js"></script>
   <script>
-    // ===== THEME TOGGLE =====
     function toggleTheme() {
       const html = document.documentElement;
-      const current = html.getAttribute('data-theme');
-      html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+      const cur  = html.getAttribute('data-theme');
+      html.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
       localStorage.setItem('cyberreport-theme', html.getAttribute('data-theme'));
     }
-
-    // Restore saved theme
     const saved = localStorage.getItem('cyberreport-theme');
     if (saved) document.documentElement.setAttribute('data-theme', saved);
-
-    // Smooth scroll for nav links
     document.querySelectorAll('a[href^="#"]').forEach(a => {
       a.addEventListener('click', e => {
-        const target = document.querySelector(a.getAttribute('href'));
-        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
       });
     });
   </script>
 </body>
-
 </html>

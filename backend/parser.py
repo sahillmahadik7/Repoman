@@ -87,31 +87,27 @@ PORT_RISK_DB = {
                                              'Restrict access. Ensure authentication is required. Do not expose publicly.'),
     9200: ('CRITICAL',      'Elasticsearch', 'Elasticsearch is often unauthenticated. Full data exposure risk.',
                                              'Enable Elasticsearch security (X-Pack). Bind to localhost. Block port 9200.'),
-    27017: ('HIGH',          'MongoDB',       'MongoDB is exposed. Often has no authentication by default.',
-            'Enable MongoDB authentication. Bind to localhost or private network. Block 27017.'),
+    27017:('HIGH',          'MongoDB',       'MongoDB is exposed. Often has no authentication by default.',
+                                             'Enable MongoDB authentication. Bind to localhost or private network. Block 27017.'),
 }
 
 # Default risk for unknown ports
 DEFAULT_PORT_RISK = ('LOW', 'Unknown Service',
-                     'An open port was detected running an unidentified service.',
-                     'Investigate the service running on this port. Close if not required.')
+    'An open port was detected running an unidentified service.',
+    'Investigate the service running on this port. Close if not required.')
 
 
 # ===== HELPERS =====
 def classify_severity(text):
     text_lower = text.lower()
     for kw in CRITICAL_KEYWORDS:
-        if kw in text_lower:
-            return 'CRITICAL'
+        if kw in text_lower: return 'CRITICAL'
     for kw in HIGH_KEYWORDS:
-        if kw in text_lower:
-            return 'HIGH'
+        if kw in text_lower: return 'HIGH'
     for kw in MEDIUM_KEYWORDS:
-        if kw in text_lower:
-            return 'MEDIUM'
+        if kw in text_lower: return 'MEDIUM'
     for kw in LOW_KEYWORDS:
-        if kw in text_lower:
-            return 'LOW'
+        if kw in text_lower: return 'LOW'
     return 'INFORMATIONAL'
 
 
@@ -187,7 +183,7 @@ def parse_json_input(data):
 
     # --- Collect all unique open ports across all scan types ---
     seen_ports = set()
-    all_ports = []
+    all_ports  = []
 
     # Pull from raw_output first, then scan_results
     sources = []
@@ -222,8 +218,8 @@ def parse_json_input(data):
         )
 
         product_str = f" ({p['product']})" if p['product'] else ''
-        version_str = f" v{p['version']}" if p['version'] else ''
-        title = f"Open Port {p['port']}/{p['protocol'].upper()} — {svc_name}{product_str}{version_str}"
+        version_str = f" v{p['version']}"  if p['version'] else ''
+        title       = f"Open Port {p['port']}/{p['protocol'].upper()} — {svc_name}{product_str}{version_str}"
 
         findings['vulnerabilities'].append({
             'description': title,
@@ -311,9 +307,9 @@ def parse_tagged_text(raw_text):
         'scan_metadata':   {},
     }
 
-    lines = raw_text.splitlines()
+    lines         = raw_text.splitlines()
     current_block = None
-    current_text = []
+    current_text  = []
 
     def flush_block():
         if not current_block or not current_text:
@@ -344,7 +340,7 @@ def parse_tagged_text(raw_text):
         if not line:
             flush_block()
             current_block = None
-            current_text = []
+            current_text  = []
             continue
 
         findings['raw_lines'].append(line)
@@ -352,30 +348,24 @@ def parse_tagged_text(raw_text):
 
         if tag_match:
             flush_block()
-            tag = tag_match.group(1).upper()
+            tag     = tag_match.group(1).upper()
             content = tag_match.group(2).strip()
 
             if tag == 'TARGET':
-                if content:
-                    findings['targets'].append(content)
-                current_block = None
-                current_text = []
+                if content: findings['targets'].append(content)
+                current_block = None; current_text = []
             elif tag == 'DATE':
-                if content:
-                    findings['date'] = content
-                current_block = None
-                current_text = []
+                if content: findings['date'] = content
+                current_block = None; current_text = []
             elif tag == 'TITLE':
-                if content:
-                    findings['title'] = content
-                current_block = None
-                current_text = []
+                if content: findings['title'] = content
+                current_block = None; current_text = []
             elif tag in ('VULN', 'SCAN', 'NOTE', 'PROOF'):
                 current_block = tag
-                current_text = [content] if content else []
+                current_text  = [content] if content else []
             else:
                 current_block = 'NOTE'
-                current_text = [line]
+                current_text  = [line]
         else:
             if current_block:
                 current_text.append(line)
@@ -411,8 +401,7 @@ def parse_findings(raw_text):
 
 def get_summary_stats(findings):
     """Return severity count summary dict."""
-    counts = {'CRITICAL': 0, 'HIGH': 0,
-              'MEDIUM': 0, 'LOW': 0, 'INFORMATIONAL': 0}
+    counts = {'CRITICAL': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0, 'INFORMATIONAL': 0}
     for v in findings['vulnerabilities']:
         sev = v.get('severity', 'INFORMATIONAL')
         counts[sev] = counts.get(sev, 0) + 1

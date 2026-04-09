@@ -2,7 +2,7 @@
 # Works with both JSON scan output and tagged text input
 
 from datetime import datetime
-from parser import get_summary_stats
+from findings_parser import get_summary_stats
 
 # ===== SEVERITY CONFIG =====
 SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFORMATIONAL']
